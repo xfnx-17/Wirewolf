@@ -201,7 +201,7 @@ std::string LlmInference::generate_response(const std::string &prompt) {
 // ============================================================
 
 static std::string ip_to_string(uint32_t ip_net_order) {
-  uint8_t *b = reinterpret_cast<uint8_t *>(&ip_net_order);
+  const uint8_t *b = reinterpret_cast<const uint8_t *>(&ip_net_order);
   char buf[32];
   std::snprintf(buf, sizeof(buf), "%u.%u.%u.%u", b[0], b[1], b[2], b[3]);
   return buf;
@@ -1286,7 +1286,7 @@ void LlmInference::worker_loop() {
       continue;
 
     FlowPtr flow = std::move(flow_opt.value());
-    FlowData *raw = flow.get();
+    const FlowData *raw = flow.get();
 
     if (flow->reassembled_payload.empty()) {
       LOG_DEBUG("llm", "Skipping empty payload");

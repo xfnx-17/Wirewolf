@@ -313,7 +313,7 @@ static void process_states(const std::vector<std::string> &state_files,
 static int run_states_mode(const Args &A);
 
 static void add_paths(std::vector<std::string> &v, const std::string &csv) {
-  for (auto &p : split(csv, ',')) if (!p.empty()) v.push_back(p);
+  for (const auto &p : split(csv, ',')) if (!p.empty()) v.push_back(p);
 }
 
 int main(int argc, char **argv) {
@@ -360,7 +360,7 @@ int main(int argc, char **argv) {
   std::map<std::string, ConnAcc> train_conns;
   long rok = 0;
   long rbad = 0;
-  for (auto &p : A.train) read_binetflow(p, train_conns, rok, rbad);
+  for (const auto &p : A.train) read_binetflow(p, train_conns, rok, rbad);
   std::cout << "Train: read " << rok << " flow rows (" << rbad << " skipped) over "
             << train_conns.size() << " connections\n";
 
@@ -372,7 +372,7 @@ int main(int argc, char **argv) {
   double len_norm = 0;
   std::vector<std::string> ex_bot;
   std::vector<std::string> ex_norm;
-  for (auto &kv : train_conns) {
+  for (const auto &kv : train_conns) {
     if (kv.second.flows.size() < A.min_flows) continue;
     std::string s = behavioral::encode_connection(kv.second.flows, cfg);
     if (s.size() < 2) continue;
@@ -407,9 +407,9 @@ int main(int argc, char **argv) {
             << " (avg len " << (n_norm ? len_norm / n_norm : 0) << ", alphabet "
             << normal.alphabet_size() << ")\n";
   std::cout << "Example Botnet strings:\n";
-  for (auto &s : ex_bot) std::cout << "  " << s << "\n";
+  for (const auto &s : ex_bot) std::cout << "  " << s << "\n";
   std::cout << "Example Normal strings:\n";
-  for (auto &s : ex_norm) std::cout << "  " << s << "\n";
+  for (const auto &s : ex_norm) std::cout << "  " << s << "\n";
 
   if (A.test.empty()) {
     std::cout << "\nNo --test scenarios given; skipping evaluation.\n";
@@ -420,11 +420,11 @@ int main(int argc, char **argv) {
   std::map<std::string, ConnAcc> test_conns;
   long trok = 0;
   long trbad = 0;
-  for (auto &p : A.test) read_binetflow(p, test_conns, trok, trbad);
+  for (const auto &p : A.test) read_binetflow(p, test_conns, trok, trbad);
 
   struct Sample { double llr; bool is_botnet; };
   std::vector<Sample> samples;
-  for (auto &kv : test_conns) {
+  for (const auto &kv : test_conns) {
     if (kv.second.flows.size() < A.min_flows) continue;
     std::string s = behavioral::encode_connection(kv.second.flows, cfg);
     if (s.size() < 2) continue;
@@ -439,7 +439,7 @@ int main(int argc, char **argv) {
 
   auto confusion = [&](double thr, long &tp, long &fp, long &fn, long &tn) {
     tp = fp = fn = tn = 0;
-    for (auto &s : samples) {
+    for (const auto &s : samples) {
       bool pred = s.llr > thr;
       if (s.is_botnet) (pred ? tp : fn)++;
       else (pred ? fp : tn)++;
@@ -558,7 +558,7 @@ static int run_states_mode(const Args &A) {
 
   auto confusion = [&](double thr, long &tp, long &fp, long &fn, long &tn) {
     tp = fp = fn = tn = 0;
-    for (auto &s : samples) {
+    for (const auto &s : samples) {
       bool pred = (bot.score(s.first) - norm.score(s.first)) > thr;
       if (s.second) (pred ? tp : fn)++;
       else (pred ? fp : tn)++;

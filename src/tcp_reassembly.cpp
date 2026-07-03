@@ -801,7 +801,7 @@ void TcpReassembler::check_connection_anomalies(uint32_t src_ip,
 
     // C2 beaconing tracking: record SYN timestamp per (src, dst, port) tuple.
     // Only track non-private destination IPs to avoid noise from local traffic.
-    uint8_t *dst_bytes = reinterpret_cast<uint8_t *>(&dst_ip);
+    const uint8_t *dst_bytes = reinterpret_cast<const uint8_t *>(&dst_ip);
     bool is_private = (dst_bytes[0] == 10) ||
                       (dst_bytes[0] == 172 && (dst_bytes[1] & 0xF0) == 16) ||
                       (dst_bytes[0] == 192 && dst_bytes[1] == 168);
@@ -925,7 +925,7 @@ void TcpReassembler::check_connection_anomalies(uint32_t src_ip,
   // 100+ unique dst IPs on the SAME well-known port from one source.
   // Classic pattern: WannaCry/EternalBlue scanning port 445 across the internet.
   // This catches single-port worm scans that the port-scan detector misses.
-  for (auto &[worm_port, dst_ip_set] : tracker.port_dst_ips) {
+  for (const auto &[worm_port, dst_ip_set] : tracker.port_dst_ips) {
     uint16_t worm_host_port = (worm_port >> 8) | ((worm_port & 0xFF) << 8);
     // Skip common client/web ports: contacting 100+ distinct servers on
     // 80/443/8080 is normal browsing, a proxy, or a NAT gateway — not a worm.
@@ -970,7 +970,7 @@ void TcpReassembler::check_connection_anomalies(uint32_t src_ip,
 }
 
 static std::string ip_to_str(uint32_t ip_net_order) {
-  uint8_t *b = reinterpret_cast<uint8_t *>(&ip_net_order);
+  const uint8_t *b = reinterpret_cast<const uint8_t *>(&ip_net_order);
   char buf[32];
   std::snprintf(buf, sizeof(buf), "%u.%u.%u.%u", b[0], b[1], b[2], b[3]);
   return buf;
@@ -1026,12 +1026,12 @@ void TcpReassembler::check_beaconing_at_flush() {
   // Diagnostic: top fan-out sources (distinct dst IPs on a single port<1024).
   {
     std::vector<std::tuple<size_t, uint32_t, uint16_t>> fanout;
-    for (auto &[src, tr] : source_trackers_)
-      for (auto &[port, dsts] : tr.port_dst_ips)
+    for (const auto &[src, tr] : source_trackers_)
+      for (const auto &[port, dsts] : tr.port_dst_ips)
         fanout.emplace_back(dsts.size(), src, port);
     std::sort(fanout.rbegin(), fanout.rend());
     for (size_t i = 0; i < std::min<size_t>(8, fanout.size()); ++i) {
-      auto &[cnt, src, port] = fanout[i];
+      const auto &[cnt, src, port] = fanout[i];
       uint16_t hp = (port >> 8) | ((port & 0xFF) << 8);
       LOG_INFO("pcap", "Fanout: src=" + ip_to_str(src) + " port=" +
                            std::to_string(hp) + " distinct_dsts=" +
@@ -1039,7 +1039,7 @@ void TcpReassembler::check_beaconing_at_flush() {
     }
   }
 
-  for (auto &[key, bt] : beacon_trackers_) {
+  for (const auto &[key, bt] : beacon_trackers_) {
     const auto &ts = bt.syn_timestamps;
     // Need at least 8 connections to establish a pattern. (Lowered from 10 to
     // catch shorter beacon trains; the coefficient-of-variation regularity
@@ -1416,7 +1416,7 @@ void TcpReassembler::dump_behavioral_states(const std::string &path) {
   // at runtime, so a model trained on this matches live scoring exactly.
   os << "src,dst,dport,state\n";
   size_t n = 0;
-  for (auto &kv : beh_conns_) {
+  for (const auto &kv : beh_conns_) {
     const BehConn &bc = kv.second;
     if (bc.flows.size() < beh_cfg_.min_flows)
       continue;

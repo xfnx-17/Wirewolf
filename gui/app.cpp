@@ -69,7 +69,7 @@ void WirewolfApp::process_pending_data() {
   }
   {
     std::scoped_lock lock(logs_mutex_);
-    for (auto &l : pending_logs_)
+    for (const auto &l : pending_logs_)
       log_panel_.add_entry(l.level, l.component, l.message);
     pending_logs_.clear();
   }

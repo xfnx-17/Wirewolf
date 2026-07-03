@@ -218,12 +218,12 @@ int main(int argc, char *argv[]) {
                  "before the LLM saw them.\n";
 
   std::cout << "\nPer-attack-type detection:\n";
-  for (auto &[type, pr] : per_type)
+  for (const auto &[type, pr] : per_type)
     printf("  %-24s %d / %d  (%.0f%%)\n", type.c_str(), pr.first, pr.second,
            100.0 * div(pr.first, pr.second));
 
   std::cout << "\nAlerts raised by type:\n";
-  for (auto &[type, n] : alert_types)
+  for (const auto &[type, n] : alert_types)
     printf("  %-24s %d\n", type.c_str(), n);
   std::cout << "===========================================================\n";
 
