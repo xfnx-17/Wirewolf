@@ -50,10 +50,12 @@ int main(int argc, char **argv) {
     std::fprintf(stderr, "open failed: %s\n", err);
     return 1;
   }
-  std::set<uint32_t> internal, external;
+  std::set<uint32_t> internal;
+  std::set<uint32_t> external;
   std::map<uint32_t, long> ext_hits; // external IP -> packet count
   std::set<std::pair<uint32_t, uint32_t>> host_pairs; // normalized (lo,hi)
-  long pkts = 0, ipv4 = 0;
+  long pkts = 0;
+  long ipv4 = 0;
   struct pcap_pkthdr *hdr;
   const u_char *data;
   int r;
@@ -63,7 +65,8 @@ int main(int argc, char **argv) {
     if (hdr->caplen < 34) continue;
     if (((data[12] << 8) | data[13]) != 0x0800) continue; // IPv4 only
     const u_char *ip = data + 14;
-    uint32_t src, dst;
+    uint32_t src;
+    uint32_t dst;
     std::memcpy(&src, ip + 12, 4);
     std::memcpy(&dst, ip + 16, 4);
     ++ipv4;

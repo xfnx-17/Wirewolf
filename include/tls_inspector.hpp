@@ -26,7 +26,10 @@ struct TlsInfo {
 // ---------------- compact MD5 (public-domain style) ----------------
 namespace _md5 {
 struct Ctx {
-  uint32_t a, b, c, d;
+  uint32_t a;
+  uint32_t b;
+  uint32_t c;
+  uint32_t d;
   uint64_t len;
   uint8_t buf[64];
   size_t buflen;
@@ -53,7 +56,10 @@ inline void process(Ctx &ctx, const uint8_t *p) {
   uint32_t M[16];
   for (int i = 0; i < 16; ++i)
     M[i] = p[i*4] | (p[i*4+1] << 8) | (p[i*4+2] << 16) | ((uint32_t)p[i*4+3] << 24);
-  uint32_t A = ctx.a, B = ctx.b, C = ctx.c, D = ctx.d;
+  uint32_t A = ctx.a;
+  uint32_t B = ctx.b;
+  uint32_t C = ctx.c;
+  uint32_t D = ctx.d;
   for (int i = 0; i < 64; ++i) {
     uint32_t F; int g;
     if (i < 16)      { F = (B & C) | (~B & D); g = i; }
@@ -155,7 +161,9 @@ inline bool parse_tls_client_hello(const std::vector<uint8_t> &p, TlsInfo &out) 
   size_t ext_end = pos + ext_total;
   if (ext_end > p.size()) ext_end = p.size();
 
-  std::vector<uint16_t> extensions, curves, formats;
+  std::vector<uint16_t> extensions;
+  std::vector<uint16_t> curves;
+  std::vector<uint16_t> formats;
   while (pos + 4 <= ext_end) {
     uint16_t etype = (p[pos] << 8) | p[pos + 1];
     uint16_t elen = (p[pos + 2] << 8) | p[pos + 3];

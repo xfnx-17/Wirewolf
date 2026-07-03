@@ -74,7 +74,8 @@ void MarkovModel::observe(const std::string &s) {
   if (s.size() < 2) return;
   alphabet_[s[0]] = true;
   for (size_t i = 1; i < s.size(); ++i) {
-    char from = s[i - 1], to = s[i];
+    char from = s[i - 1];
+    char to = s[i];
     counts_[from][to] += 1;
     row_totals_[from] += 1;
     alphabet_[to] = true;

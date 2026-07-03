@@ -15,7 +15,8 @@
 static ID3D11Device *g_pd3dDevice = nullptr;
 static ID3D11DeviceContext *g_pd3dDeviceContext = nullptr;
 static IDXGISwapChain *g_pSwapChain = nullptr;
-static UINT g_ResizeWidth = 0, g_ResizeHeight = 0;
+static UINT g_ResizeWidth = 0;
+static UINT g_ResizeHeight = 0;
 static ID3D11RenderTargetView *g_mainRenderTargetView = nullptr;
 
 // Forward declarations

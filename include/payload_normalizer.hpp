@@ -38,7 +38,8 @@ inline std::string _percent_decode_once(const std::string &in, bool &changed) {
     if (in[i] == '%' && i + 1 < in.size() && (in[i + 1] == 'u' || in[i + 1] == 'U')) {
       // %uXXXX — take the low byte
       if (i + 5 < in.size()) {
-        int h1 = _hex_val(in[i + 4]), h2 = _hex_val(in[i + 5]);
+        int h1 = _hex_val(in[i + 4]);
+        int h2 = _hex_val(in[i + 5]);
         if (h1 >= 0 && h2 >= 0) {
           out += static_cast<char>((h1 << 4) | h2);
           i += 5;
@@ -48,7 +49,8 @@ inline std::string _percent_decode_once(const std::string &in, bool &changed) {
       }
       out += in[i];
     } else if (in[i] == '%' && i + 2 < in.size()) {
-      int h1 = _hex_val(in[i + 1]), h2 = _hex_val(in[i + 2]);
+      int h1 = _hex_val(in[i + 1]);
+      int h2 = _hex_val(in[i + 2]);
       if (h1 >= 0 && h2 >= 0) {
         out += static_cast<char>((h1 << 4) | h2);
         i += 2;

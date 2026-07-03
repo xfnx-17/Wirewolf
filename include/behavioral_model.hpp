@@ -64,6 +64,10 @@ public:
   MarkovModel() = default;
   explicit MarkovModel(std::string label, double k = 0.5)
       : label_(std::move(label)), k_(k) {}
+  MarkovModel(const MarkovModel &) = default;
+  MarkovModel &operator=(const MarkovModel &) = default;
+  MarkovModel(MarkovModel &&) noexcept = default;
+  MarkovModel &operator=(MarkovModel &&) noexcept = default;
 
   const std::string &label() const { return label_; }
 

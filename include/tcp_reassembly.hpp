@@ -44,6 +44,10 @@ struct ConnectionState {
   size_t length_sq_sum = 0;
 
   ConnectionState() = default;
+  ConnectionState(const ConnectionState &) = default;
+  ConnectionState &operator=(const ConnectionState &) = default;
+  ConnectionState(ConnectionState &&) noexcept = default;
+  ConnectionState &operator=(ConnectionState &&) noexcept = default;
 };
 
 // Tracks per-source-IP connection patterns to detect volumetric attacks
@@ -181,7 +185,8 @@ private:
   behavioral::MarkovModel beh_botnet_;
   behavioral::MarkovModel beh_normal_;
   struct BehConn {
-    uint32_t src = 0, dst = 0;
+    uint32_t src = 0;
+    uint32_t dst = 0;
     uint16_t dport = 0;
     std::vector<behavioral::Flow> flows;
   };

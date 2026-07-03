@@ -54,7 +54,8 @@ struct ether_header {
 };
 
 struct iphdr {
-  uint8_t ihl : 4, version : 4;
+  uint8_t ihl : 4;
+  uint8_t version : 4;
   uint8_t tos;
   uint16_t tot_len;
   uint16_t id;
@@ -120,7 +121,8 @@ TcpReassembler::TcpReassembler(const WirewolfConfig &config,
     std::ifstream bf(dir + "behavioral.botnet.model");
     std::ifstream nf(dir + "behavioral.normal.model");
     if (bf && nf) {
-      std::string fp_b, fp_n;
+      std::string fp_b;
+      std::string fp_n;
       beh_botnet_ = behavioral::MarkovModel::load(bf, &fp_b);
       beh_normal_ = behavioral::MarkovModel::load(nf, &fp_n);
       behavioral_ready_ = true;
@@ -336,7 +338,10 @@ void TcpReassembler::set_block_allowlist(const std::string &csv) {
     if (a != std::string::npos) {
       tok = tok.substr(a, b - a + 1);
       // parse dotted IPv4 -> network byte order
-      unsigned o0, o1, o2, o3;
+      unsigned o0;
+      unsigned o1;
+      unsigned o2;
+      unsigned o3;
 #ifdef _WIN32
       int matched = sscanf_s(tok.c_str(), "%u.%u.%u.%u", &o0, &o1, &o2, &o3);
 #else
@@ -508,7 +513,8 @@ uint32_t TcpReassembler::process_ip_packet(const uint8_t *ip_packet,
       uint32_t stream_start =
           state.expected_seq - static_cast<uint32_t>(state.payload.size());
       int32_t rel = static_cast<int32_t>(seq - stream_start);
-      int overlap_cmp = 0, conflict_bytes = 0;
+      int overlap_cmp = 0;
+      int conflict_bytes = 0;
       for (uint32_t i = 0; i < payload_len; ++i) {
         long pos = static_cast<long>(rel) + static_cast<long>(i);
         if (pos >= 0 && pos < static_cast<long>(state.payload.size())) {
@@ -1023,8 +1029,12 @@ void TcpReassembler::check_beaconing_at_flush() {
 
   // Diagnostic: characterize beacon candidates (timing + regularity).
   {
-    size_t with8 = 0, too_fast = 0, in_range = 0, too_slow = 0;
-    size_t regular_any = 0, regular_inrange = 0;
+    size_t with8 = 0;
+    size_t too_fast = 0;
+    size_t in_range = 0;
+    size_t too_slow = 0;
+    size_t regular_any = 0;
+    size_t regular_inrange = 0;
     for (const auto &kv : beacon_trackers_) {
       const auto &t = kv.second.syn_timestamps;
       if (t.size() < 8) continue;

@@ -297,8 +297,10 @@ bool NpuFilter::detect_credential_content(const FlowData *flow) const {
     score += 1;
 
   // Protocol URIs used by credential harvesters
-  static const char *proto_uris[] = {"imap://", "smtp://", "pop3://",
-                                      "ftp://",  "oauth://"};
+  // NOSONAR-justification: these are IDS detection signatures for spotting
+  // credential harvesters in captured traffic — not protocols this code uses.
+  static const char *proto_uris[] = {"imap://", "smtp://", "pop3://", // NOSONAR
+                                      "ftp://",  "oauth://"};         // NOSONAR
   for (const char *uri : proto_uris) {
     if (text.find(uri) != std::string::npos) {
       score += 1;
@@ -738,7 +740,8 @@ int NpuFilter::inspect_tls(FlowData *flow) const {
     size_t dot = s.find('.');
     std::string label = (dot == std::string::npos) ? s : s.substr(0, dot);
     if (label.size() >= 16) {
-      size_t digits = 0, consonants = 0;
+      size_t digits = 0;
+      size_t consonants = 0;
       for (char c : label) {
         if (c >= '0' && c <= '9') digits++;
         else if (strchr("bcdfghjklmnpqrstvwxz", c)) consonants++;

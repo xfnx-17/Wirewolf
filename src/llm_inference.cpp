@@ -1366,7 +1366,8 @@ void LlmInference::worker_loop() {
         } else {
           // Check for bulk email list (contact exfiltration)
           int at_count = 0;
-          std::string first_email, second_email;
+          std::string first_email;
+          std::string second_email;
           size_t pos = 0;
           while (pos < payload_preview.size() && at_count < 3) {
             size_t at = payload_preview.find('@', pos);
@@ -1425,7 +1426,8 @@ void LlmInference::worker_loop() {
           if ((b >= 32 && b <= 126) || b == '\n' || b == '\r')
             payload_preview.push_back(static_cast<char>(b));
         }
-        size_t post_count = 0, get_count = 0;
+        size_t post_count = 0;
+        size_t get_count = 0;
         size_t pos = 0;
         while ((pos = payload_preview.find("POST ", pos)) != std::string::npos) {
           post_count++;

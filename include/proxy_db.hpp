@@ -62,7 +62,9 @@ public:
   bool lookup(uint32_t ip, Info &out) const {
     if (!ready_)
       return false;
-    long lo = 0, hi = static_cast<long>(rows_) - 1, ans = -1;
+    long lo = 0;
+    long hi = static_cast<long>(rows_) - 1;
+    long ans = -1;
     while (lo <= hi) {
       const long mid = (lo + hi) / 2;
       if (u32(static_cast<size_t>(mid) * 12) <= ip) {

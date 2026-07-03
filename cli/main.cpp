@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
 
   if (!controller.start(cfg)) {
     LOG_ERROR("main", "Failed to start pipeline");
+    g_controller = nullptr; // controller dies with this frame; unhook handler
     return 1;
   }
 

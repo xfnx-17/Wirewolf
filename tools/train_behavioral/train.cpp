@@ -40,7 +40,10 @@ enum class Cls { Botnet, Normal, Background, Other };
 
 struct ConnAcc {
   std::vector<Flow> flows;
-  int botnet = 0, normal = 0, background = 0, total = 0;
+  int botnet = 0;
+  int normal = 0;
+  int background = 0;
+  int total = 0;
 };
 
 // ---- helpers ----
@@ -68,7 +71,11 @@ static long days_from_civil(int y, unsigned m, unsigned d) {
 
 // Parse "YYYY/MM/DD HH:MM:SS.ffffff" (CTU-13 binetflow) → epoch seconds.
 static double parse_time(const std::string &t) {
-  int Y = 0, Mo = 0, D = 0, H = 0, Mi = 0;
+  int Y = 0;
+  int Mo = 0;
+  int D = 0;
+  int H = 0;
+  int Mi = 0;
   double S = 0;
   if (std::sscanf(t.c_str(), "%d/%d/%d %d:%d:%lf", &Y, &Mo, &D, &H, &Mi, &S) < 6)
     return 0.0;
@@ -101,9 +108,14 @@ static bool read_binetflow(const std::string &path,
     for (int i = 0; i < (int)h.size(); ++i) col[h[i]] = i;
   }
   auto need = [&](const char *n) { return col.count(n) ? col[n] : -1; };
-  int ci_start = need("StartTime"), ci_dur = need("Dur"), ci_proto = need("Proto"),
-      ci_src = need("SrcAddr"), ci_dst = need("DstAddr"), ci_dport = need("Dport"),
-      ci_bytes = need("TotBytes"), ci_label = need("Label");
+  int ci_start = need("StartTime");
+  int ci_dur = need("Dur");
+  int ci_proto = need("Proto");
+  int ci_src = need("SrcAddr");
+  int ci_dst = need("DstAddr");
+  int ci_dport = need("Dport");
+  int ci_bytes = need("TotBytes");
+  int ci_label = need("Label");
   if (ci_start < 0 || ci_dur < 0 || ci_proto < 0 || ci_src < 0 || ci_dst < 0 ||
       ci_dport < 0 || ci_bytes < 0 || ci_label < 0) {
     std::cerr << "Missing required columns in " << path << "\n";
@@ -151,18 +163,27 @@ static Cls conn_label(const ConnAcc &a, bool majority) {
 }
 
 struct Args {
-  std::vector<std::string> train, test;
+  std::vector<std::string> train;
+  std::vector<std::string> test;
   // train-on-pcap mode: state strings (from export_states) + binetflow labels.
-  std::vector<std::string> train_states, train_bf, test_states, test_bf;
+  std::vector<std::string> train_states;
+  std::vector<std::string> train_bf;
+  std::vector<std::string> test_states;
+  std::vector<std::string> test_bf;
   std::string out_dir = "models";
-  bool majority = false, include_bg = false;
+  bool majority = false;
+  bool include_bg = false;
   size_t min_flows = 4;
-  double k = 0.5, threshold = 0.0;
+  double k = 0.5;
+  double threshold = 0.0;
 };
 
 // ---- train-on-pcap (state strings + binetflow labels) helpers ----
 static uint32_t parse_ip4(const std::string &s) {
-  uint32_t a = 0, b = 0, c = 0, d = 0;
+  uint32_t a = 0;
+  uint32_t b = 0;
+  uint32_t c = 0;
+  uint32_t d = 0;
   if (std::sscanf(s.c_str(), "%u.%u.%u.%u", &a, &b, &c, &d) != 4)
     return 0;
   return (a << 24) | (b << 16) | (c << 8) | d;
@@ -179,14 +200,18 @@ static int parse_port(const std::string &s) {
 // Order-independent 4-tuple key: {min,max} IP pair + dport.
 static std::string tuple_key(const std::string &a, const std::string &b,
                              int dport) {
-  uint32_t ia = parse_ip4(a), ib = parse_ip4(b);
-  uint32_t lo = std::min(ia, ib), hi = std::max(ia, ib);
+  uint32_t ia = parse_ip4(a);
+  uint32_t ib = parse_ip4(b);
+  uint32_t lo = std::min(ia, ib);
+  uint32_t hi = std::max(ia, ib);
   return std::to_string(lo) + "-" + std::to_string(hi) + "-" +
          std::to_string(dport);
 }
 
 struct LblCount {
-  int bot = 0, norm = 0, bg = 0;
+  int bot = 0;
+  int norm = 0;
+  int bg = 0;
 };
 
 // Build a 4-tuple -> class-count map from binetflow label files.
@@ -207,8 +232,10 @@ static void load_bf_labels(const std::string &path,
       col[h[i]] = i;
   }
   auto need = [&](const char *n) { return col.count(n) ? col[n] : -1; };
-  int ci_src = need("SrcAddr"), ci_dst = need("DstAddr"),
-      ci_dport = need("Dport"), ci_label = need("Label");
+  int ci_src = need("SrcAddr");
+  int ci_dst = need("DstAddr");
+  int ci_dport = need("Dport");
+  int ci_label = need("Label");
   if (ci_src < 0 || ci_dst < 0 || ci_dport < 0 || ci_label < 0) {
     std::cerr << "Missing columns in " << path << "\n";
     return;
@@ -331,15 +358,20 @@ int main(int argc, char **argv) {
 
   // ---- TRAIN ----
   std::map<std::string, ConnAcc> train_conns;
-  long rok = 0, rbad = 0;
+  long rok = 0;
+  long rbad = 0;
   for (auto &p : A.train) read_binetflow(p, train_conns, rok, rbad);
   std::cout << "Train: read " << rok << " flow rows (" << rbad << " skipped) over "
             << train_conns.size() << " connections\n";
 
-  MarkovModel botnet("Botnet", A.k), normal("Normal", A.k);
-  long n_bot = 0, n_norm = 0;
-  double len_bot = 0, len_norm = 0;
-  std::vector<std::string> ex_bot, ex_norm;
+  MarkovModel botnet("Botnet", A.k);
+  MarkovModel normal("Normal", A.k);
+  long n_bot = 0;
+  long n_norm = 0;
+  double len_bot = 0;
+  double len_norm = 0;
+  std::vector<std::string> ex_bot;
+  std::vector<std::string> ex_norm;
   for (auto &kv : train_conns) {
     if (kv.second.flows.size() < A.min_flows) continue;
     std::string s = behavioral::encode_connection(kv.second.flows, cfg);
@@ -386,7 +418,8 @@ int main(int argc, char **argv) {
 
   // ---- EVALUATE on held-out scenarios ----
   std::map<std::string, ConnAcc> test_conns;
-  long trok = 0, trbad = 0;
+  long trok = 0;
+  long trbad = 0;
   for (auto &p : A.test) read_binetflow(p, test_conns, trok, trbad);
 
   struct Sample { double llr; bool is_botnet; };
@@ -423,15 +456,24 @@ int main(int argc, char **argv) {
   std::string csv_path = A.out_dir + "/behavioral_eval.csv";
   std::ofstream csv(csv_path);
   csv << "threshold,TP,FP,FN,TN,precision,recall,f1\n";
-  for (double t = -3.0; t <= 3.0001; t += 0.25) {
-    long tp, fp, fn, tn; confusion(t, tp, fp, fn, tn);
+  for (int sweep = 0; sweep <= 24; ++sweep) {
+    const double t = -3.0 + 0.25 * sweep;
+    long tp;
+    long fp;
+    long fn;
+    long tn;
+    confusion(t, tp, fp, fn, tn);
     auto [p, r, fsc] = prf(tp, fp, fn);
     csv << t << "," << tp << "," << fp << "," << fn << "," << tn << "," << p
         << "," << r << "," << fsc << "\n";
   }
   csv.close();
 
-  long tp, fp, fn, tn; confusion(A.threshold, tp, fp, fn, tn);
+  long tp;
+  long fp;
+  long fn;
+  long tn;
+  confusion(A.threshold, tp, fp, fn, tn);
   auto [p, r, fsc] = prf(tp, fp, fn);
   std::cout << "\n=== EVALUATION (Botnet detection, threshold " << A.threshold
             << ") ===\n";
@@ -473,8 +515,10 @@ static int run_states_mode(const Args &A) {
   std::cout << "Train: " << A.train_bf.size() << " binetflow file(s), "
             << trainLbl.size() << " labeled 4-tuples\n";
 
-  MarkovModel bot("Botnet", A.k), norm("Normal", A.k);
-  long kept = 0, unlbl = 0;
+  MarkovModel bot("Botnet", A.k);
+  MarkovModel norm("Normal", A.k);
+  long kept = 0;
+  long unlbl = 0;
   process_states(A.train_states, trainLbl, A.majority, A.include_bg, &bot, &norm,
                  nullptr, kept, unlbl);
   std::cout << "Train: " << kept << " labeled connections (" << unlbl
@@ -505,7 +549,8 @@ static int run_states_mode(const Args &A) {
   long tbf = 0;
   for (auto &p : A.test_bf) load_bf_labels(p, testLbl, tbf);
   std::vector<std::pair<std::string, bool>> samples;
-  long tkept = 0, tunl = 0;
+  long tkept = 0;
+  long tunl = 0;
   process_states(A.test_states, testLbl, A.majority, A.include_bg, nullptr,
                  nullptr, &samples, tkept, tunl);
   std::cout << "\nTest: " << samples.size() << " labeled connections held out ("
@@ -527,15 +572,22 @@ static int run_states_mode(const Args &A) {
   };
   std::ofstream csv(A.out_dir + "/behavioral_eval.csv");
   csv << "threshold,TP,FP,FN,TN,precision,recall,f1\n";
-  for (double t = -3.0; t <= 3.0001; t += 0.25) {
-    long tp, fp, fn, tn;
+  for (int sweep = 0; sweep <= 24; ++sweep) {
+    const double t = -3.0 + 0.25 * sweep;
+    long tp;
+    long fp;
+    long fn;
+    long tn;
     confusion(t, tp, fp, fn, tn);
     auto [p, r, fs] = prf(tp, fp, fn);
     csv << t << "," << tp << "," << fp << "," << fn << "," << tn << "," << p
         << "," << r << "," << fs << "\n";
   }
   csv.close();
-  long tp, fp, fn, tn;
+  long tp;
+  long fp;
+  long fn;
+  long tn;
   confusion(A.threshold, tp, fp, fn, tn);
   auto [p, r, fs] = prf(tp, fp, fn);
   std::cout << "\n=== EVALUATION (train-on-pcap, threshold " << A.threshold

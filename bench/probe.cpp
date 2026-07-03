@@ -39,12 +39,16 @@
 namespace {
 using PairKey = uint64_t;
 PairKey make_pair_key(uint32_t a, uint32_t b) {
-  uint32_t lo = std::min(a, b), hi = std::max(a, b);
+  uint32_t lo = std::min(a, b);
+  uint32_t hi = std::max(a, b);
   return (static_cast<uint64_t>(lo) << 32) | hi;
 }
 uint32_t parse_ip(const std::string &s) {
   uint32_t ip = 0;
-  unsigned o0, o1, o2, o3;
+  unsigned o0;
+  unsigned o1;
+  unsigned o2;
+  unsigned o3;
 #ifdef _WIN32
   if (sscanf_s(s.c_str(), "%u.%u.%u.%u", &o0, &o1, &o2, &o3) == 4)
 #else
@@ -74,7 +78,8 @@ int main(int argc, char *argv[]) {
   Logger::instance().set_level(LogLevel::INFO);
 
   std::unordered_map<PairKey, std::string> labels;
-  std::set<PairKey> malicious, benign;
+  std::set<PairKey> malicious;
+  std::set<PairKey> benign;
   {
     std::ifstream f(labels_path);
     if (!f) { std::cerr << "Cannot open labels: " << labels_path << "\n"; return 1; }
@@ -83,7 +88,9 @@ int main(int argc, char *argv[]) {
       line = trim(line);
       if (line.empty() || line[0] == '#') continue;
       std::stringstream ss(line);
-      std::string a, b, label;
+      std::string a;
+      std::string b;
+      std::string label;
       std::getline(ss, a, ','); std::getline(ss, b, ','); std::getline(ss, label, ',');
       a = trim(a); b = trim(b); label = trim(label);
       if (a.empty() || b.empty()) continue;
@@ -126,7 +133,10 @@ int main(int argc, char *argv[]) {
   double secs = std::chrono::duration<double>(
                     std::chrono::steady_clock::now() - t0).count();
 
-  int tp = 0, fp = 0, fn = 0, tn = 0;
+  int tp = 0;
+  int fp = 0;
+  int fn = 0;
+  int tn = 0;
   std::map<std::string, std::pair<int, int>> per_type;
   for (PairKey k : malicious) {
     bool d = alerted.count(k) != 0;

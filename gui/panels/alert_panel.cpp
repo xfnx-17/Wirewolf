@@ -247,7 +247,9 @@ void AlertPanel::draw_inspector() {
   ImGui::Separator();
 
   // Connection info
-  char src_buf[48], dst_buf[48], time_buf[32];
+  char src_buf[48];
+  char dst_buf[48];
+  char time_buf[32];
   format_endpoint(alert.connection.src_ip, alert.connection.src_port, src_buf,
                   sizeof(src_buf));
   format_endpoint(alert.connection.dst_ip, alert.connection.dst_port, dst_buf,
