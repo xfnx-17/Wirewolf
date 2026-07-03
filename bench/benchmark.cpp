@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
     std::scoped_lock lock(mtx);
     total_flows++;
     PairKey k = make_pair_key(ev.connection.src_ip, ev.connection.dst_ip);
-    if (malicious.count(k)) {
+    if (malicious.contains(k)) {
       mal_flows++;
       // Reached the LLM if it was passed or later cleared by the LLM.
       if (ev.action == FlowAction::PassedToLLM ||
@@ -209,14 +209,14 @@ int main(int argc, char *argv[]) {
   std::map<std::string, std::pair<int, int>> per_type; // type -> {detected, total}
 
   for (PairKey k : malicious) {
-    bool detected = alerted.count(k) != 0;
+    bool detected = alerted.contains(k);
     if (detected) tp++; else fn++;
     auto &pt = per_type[labels[k]];
     pt.second++;
     if (detected) pt.first++;
   }
   for (PairKey k : benign) {
-    if (alerted.count(k)) fp++; else tn++;
+    if (alerted.contains(k)) fp++; else tn++;
   }
 
   auto div = [](double a, double b) { return b > 0 ? a / b : 0.0; };

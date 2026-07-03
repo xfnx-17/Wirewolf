@@ -302,7 +302,7 @@ void TcpReassembler::block_source(uint32_t src_ip_net_order) {
   std::scoped_lock lock(blocklist_mutex_);
   // IPS safety: never block allowlisted critical assets. This defeats the
   // "spoof the gateway's source IP to make the IPS DoS it" attack.
-  if (allowlist_ips_.count(src_ip_net_order)) {
+  if (allowlist_ips_.contains(src_ip_net_order)) {
     auto *b = reinterpret_cast<const uint8_t *>(&src_ip_net_order);
     LOG_WARN("ips", "Refusing to block allowlisted IP " +
                         std::to_string(b[0]) + "." + std::to_string(b[1]) +
@@ -320,7 +320,7 @@ void TcpReassembler::unblock_source(uint32_t src_ip_net_order) {
 
 bool TcpReassembler::is_blocked(uint32_t src_ip_net_order) const {
   std::scoped_lock lock(blocklist_mutex_);
-  return blocked_ips_.count(src_ip_net_order) != 0;
+  return blocked_ips_.contains(src_ip_net_order);
 }
 
 void TcpReassembler::set_block_allowlist(const std::string &csv) {
@@ -1329,9 +1329,9 @@ static bool looks_like_bittorrent(const std::vector<uint8_t> &p) {
     return false;
   size_t n = std::min<size_t>(p.size(), 128);
   std::string head(reinterpret_cast<const char *>(p.data()), n);
-  return head.find("BitTorrent protocol") != std::string::npos ||
-         head.find("info_hash=") != std::string::npos ||
-         head.find("d1:ad2:id20:") != std::string::npos;
+  return head.contains("BitTorrent protocol") ||
+         head.contains("info_hash=") ||
+         head.contains("d1:ad2:id20:");
 }
 
 void TcpReassembler::record_and_score_behavioral(const ConnectionId &id,
@@ -1366,7 +1366,7 @@ void TcpReassembler::record_and_score_behavioral(const ConnectionId &id,
     // P2P suppression: torrent fan-out (one host -> many peers on odd ports)
     // is behaviorally indistinguishable from botnet C2, so exclude peers we've
     // seen speaking BitTorrent.
-    if (p2p_peers_.count(id.dst_ip) || p2p_peers_.count(id.src_ip))
+    if (p2p_peers_.contains(id.dst_ip) || p2p_peers_.contains(id.src_ip))
       return;
     // Web traffic (HTTP/HTTPS/DNS) with no threat-intel tag is ordinary
     // browsing — the dominant false positive — so suppress it. Threat-intel-
@@ -1400,7 +1400,7 @@ void TcpReassembler::record_and_score_behavioral(const ConnectionId &id,
 
   if (bc.flows.size() < beh_cfg_.min_flows)
     return;
-  if (beh_alerted_.count(key))
+  if (beh_alerted_.contains(key))
     return;
 
   std::string s = behavioral::encode_connection(bc.flows, beh_cfg_);

@@ -85,9 +85,9 @@ static double parse_time(const std::string &t) {
 
 static Cls classify(const std::string &label) {
   std::string l = lower(label);
-  if (l.find("botnet") != std::string::npos) return Cls::Botnet;
-  if (l.find("normal") != std::string::npos) return Cls::Normal;
-  if (l.find("background") != std::string::npos) return Cls::Background;
+  if (l.contains("botnet")) return Cls::Botnet;
+  if (l.contains("normal")) return Cls::Normal;
+  if (l.contains("background")) return Cls::Background;
   return Cls::Other;
 }
 
@@ -107,7 +107,7 @@ static bool read_binetflow(const std::string &path,
     auto h = split(header, ',');
     for (int i = 0; i < (int)h.size(); ++i) col[h[i]] = i;
   }
-  auto need = [&](const char *n) { return col.count(n) ? col[n] : -1; };
+  auto need = [&](const char *n) { return col.contains(n) ? col[n] : -1; };
   int ci_start = need("StartTime");
   int ci_dur = need("Dur");
   int ci_proto = need("Proto");
@@ -231,7 +231,7 @@ static void load_bf_labels(const std::string &path,
     for (int i = 0; i < (int)h.size(); ++i)
       col[h[i]] = i;
   }
-  auto need = [&](const char *n) { return col.count(n) ? col[n] : -1; };
+  auto need = [&](const char *n) { return col.contains(n) ? col[n] : -1; };
   int ci_src = need("SrcAddr");
   int ci_dst = need("DstAddr");
   int ci_dport = need("Dport");

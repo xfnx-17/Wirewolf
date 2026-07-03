@@ -139,12 +139,12 @@ int main(int argc, char *argv[]) {
   int tn = 0;
   std::map<std::string, std::pair<int, int>> per_type;
   for (PairKey k : malicious) {
-    bool d = alerted.count(k) != 0;
+    bool d = alerted.contains(k);
     if (d) tp++; else fn++;
     auto &pt = per_type[labels[k]];
     pt.second++; if (d) pt.first++;
   }
-  for (PairKey k : benign) { if (alerted.count(k)) fp++; else tn++; }
+  for (PairKey k : benign) { if (alerted.contains(k)) fp++; else tn++; }
 
   auto div = [](double a, double b) { return b > 0 ? a / b : 0.0; };
   std::cout << "\n=========== BEHAVIORAL PROBE (no LLM) ===========\n";

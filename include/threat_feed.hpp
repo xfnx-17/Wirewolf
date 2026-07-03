@@ -74,7 +74,7 @@ public:
     if (host.empty() || bad_domains_.empty())
       return false;
     std::string h = to_lower(host);
-    if (bad_domains_.count(h))
+    if (bad_domains_.contains(h))
       return true;
     // suffix match on dot boundaries
     size_t pos = 0;
@@ -88,14 +88,14 @@ public:
 
   // ip is a dotted string "1.2.3.4".
   bool is_bad_ip(const std::string &ip) const {
-    return bad_ips_.count(ip) != 0;
+    return bad_ips_.contains(ip);
   }
 
   // Scan text (already lowercased recommended) for any content signature.
   // Returns pointer to the matched signature, or nullptr.
   const ContentSignature *match_signature(const std::string &text) const {
     for (const auto &sig : signatures_) {
-      if (!sig.pattern.empty() && text.find(sig.pattern) != std::string::npos)
+      if (!sig.pattern.empty() && text.contains(sig.pattern))
         return &sig;
     }
     return nullptr;

@@ -499,9 +499,9 @@ static bool is_false_positive(const std::string &threat_type,
     }
     // Also check multi-char patterns
     if (!has_attack_syntax) {
-      if (snippet.find("../") != std::string::npos) has_attack_syntax = true;
-      if (snippet.find("://") != std::string::npos) has_attack_syntax = true;
-      if (snippet.find("--") != std::string::npos) has_attack_syntax = true;
+      if (snippet.contains("../")) has_attack_syntax = true;
+      if (snippet.contains("://")) has_attack_syntax = true;
+      if (snippet.contains("--")) has_attack_syntax = true;
     }
     if (!has_attack_syntax)
       return true;
@@ -517,7 +517,7 @@ static bool payload_contains_snippet(const std::string &payload,
     return false;
 
   // Direct substring match first (fast path)
-  if (payload.find(snippet) != std::string::npos)
+  if (payload.contains(snippet))
     return true;
 
   // Case-insensitive fallback
@@ -1457,7 +1457,7 @@ void LlmInference::worker_loop() {
 
         // Identify RAT family from protocol patterns
         std::string rat_family = "Unknown RAT";
-        if (payload_preview.find("|'|'|") != std::string::npos)
+        if (payload_preview.contains("|'|'|"))
           rat_family = "njRAT/Bladabindi";
 
         // Extract key fields: hostname, user, commands
@@ -1468,7 +1468,7 @@ void LlmInference::worker_loop() {
         size_t cmd_count = 0;
         for (const char *cmd : {"ll|", "inf|", "act|", "CAP|", "rs|",
                                  "scP|", "pro|", "tcp|", "Ex|"}) {
-          if (payload_preview.find(cmd) != std::string::npos)
+          if (payload_preview.contains(cmd))
             cmd_count++;
         }
 
@@ -1577,7 +1577,7 @@ void LlmInference::worker_loop() {
     // show the LLM the canonicalized form so it can see through the encoding.
     // The decoded text becomes part of payload_str, so snippet validation
     // (which requires the snippet to appear in payload_str) still holds.
-    if (payload_str.find('%') != std::string::npos &&
+    if (payload_str.contains('%') &&
         !flow->normalized_payload.empty()) {
       const std::string &norm = flow->normalized_payload;
       size_t dec_limit = std::min(norm.size(), cfg.payload_char_limit);

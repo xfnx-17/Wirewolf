@@ -213,9 +213,9 @@ bool NpuFilter::detect_ftp_activity(const FlowData *flow) const {
   size_t scan_len = std::min(p.size(), size_t(2048));
   std::string text(p.begin(), p.begin() + scan_len);
 
-  bool has_user = text.find("USER ") != std::string::npos;
-  bool has_pass = text.find("PASS ") != std::string::npos;
-  bool has_stor = text.find("STOR ") != std::string::npos;
+  bool has_user = text.contains("USER ");
+  bool has_pass = text.contains("PASS ");
+  bool has_stor = text.contains("STOR ");
 
   // FTP control channel with login + upload is always suspicious
   if (has_user && has_pass && has_stor)
@@ -235,7 +235,7 @@ bool NpuFilter::detect_ftp_activity(const FlowData *flow) const {
         "Cookie",    "Login",     "login_",    "Contacts", "contacts",
         "token",     "Token",     "secret",    "Secret"};
     for (const char *pat : suspicious_patterns) {
-      if (filename.find(pat) != std::string::npos)
+      if (filename.contains(pat))
         return true;
     }
   }
@@ -278,22 +278,22 @@ bool NpuFilter::detect_credential_content(const FlowData *flow) const {
   int score = 0;
 
   // System recon markers
-  if (text.find("User Name:") != std::string::npos ||
-      text.find("Computer Name:") != std::string::npos ||
-      text.find("OSFullName:") != std::string::npos)
+  if (text.contains("User Name:") ||
+      text.contains("Computer Name:") ||
+      text.contains("OSFullName:"))
     score += 2;
 
   // Credential markers
-  if (text.find("Password:") != std::string::npos ||
-      text.find("Password=") != std::string::npos)
+  if (text.contains("Password:") ||
+      text.contains("Password="))
     score += 2;
 
-  if (text.find("Username:") != std::string::npos ||
-      text.find("Username=") != std::string::npos)
+  if (text.contains("Username:") ||
+      text.contains("Username="))
     score += 1;
 
   // Application credential stores
-  if (text.find("Application:") != std::string::npos)
+  if (text.contains("Application:"))
     score += 1;
 
   // Protocol URIs used by credential harvesters
@@ -302,15 +302,15 @@ bool NpuFilter::detect_credential_content(const FlowData *flow) const {
   static const char *proto_uris[] = {"imap://", "smtp://", "pop3://", // NOSONAR
                                       "ftp://",  "oauth://"};         // NOSONAR
   for (const char *uri : proto_uris) {
-    if (text.find(uri) != std::string::npos) {
+    if (text.contains(uri)) {
       score += 1;
       break;
     }
   }
 
   // Host + Password combination is a strong signal
-  if (text.find("Host:") != std::string::npos &&
-      text.find("Password:") != std::string::npos)
+  if (text.contains("Host:") &&
+      text.contains("Password:"))
     score += 2;
 
   // Bulk email list: count lines that look like email addresses.
@@ -387,7 +387,7 @@ bool NpuFilter::detect_benign_http(const FlowData *flow) const {
       "||",   "../",     "..\\",   "%00",          "%0a",     "%0d"};
 
   for (const char *marker : injection_markers) {
-    if (first_line.find(marker) != std::string::npos)
+    if (first_line.contains(marker))
       return false;
   }
 
@@ -413,7 +413,7 @@ bool NpuFilter::detect_http_bruteforce(const FlowData *flow) const {
       "account", "/api/login", "j_security_check"};
   auto is_auth_path = [&](const std::string &lower) {
     for (const char *kw : auth_paths)
-      if (lower.find(kw) != std::string::npos)
+      if (lower.contains(kw))
         return true;
     return false;
   };
@@ -604,7 +604,7 @@ bool NpuFilter::detect_rat_protocol(const FlowData *flow) const {
   };
   int recon_hits = 0;
   for (const char *marker : recon_markers) {
-    if (text.find(marker) != std::string::npos)
+    if (text.contains(marker))
       recon_hits++;
   }
   if (recon_hits >= 2)
@@ -677,7 +677,7 @@ bool NpuFilter::detect_obfuscated_injection(const FlowData *flow) const {
   };
 
   for (const char *m : markers) {
-    if (n.find(m) != std::string::npos) {
+    if (n.contains(m)) {
       LOG_INFO("filter", std::string("Obfuscation-decoded injection marker: '") +
                              m + "'");
       return true;
