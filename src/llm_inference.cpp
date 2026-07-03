@@ -1,4 +1,5 @@
 #include "llm_inference.hpp"
+#include "alert_json.hpp"
 #include "logger.hpp"
 #include <algorithm>
 #include <cctype>
@@ -13,29 +14,6 @@
 #else
 #include <arpa/inet.h>
 #endif
-
-static std::string json_escape(const std::string &s) {
-  std::string out;
-  out.reserve(s.size() + 16);
-  for (char c : s) {
-    switch (c) {
-    case '"':  out += "\\\""; break;
-    case '\\': out += "\\\\"; break;
-    case '\n': out += "\\n";  break;
-    case '\r': out += "\\r";  break;
-    case '\t': out += "\\t";  break;
-    default:
-      if (static_cast<unsigned char>(c) < 0x20) {
-        char buf[8];
-        std::snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned char>(c));
-        out += buf;
-      } else {
-        out += c;
-      }
-    }
-  }
-  return out;
-}
 
 // Prompt-injection defense: the payload is attacker-controlled and gets
 // embedded in the LLM prompt. Neutralize anything that could break out of
@@ -1487,10 +1465,7 @@ void LlmInference::worker_loop() {
         snippet = flow->protocol_tag;
       }
 
-      std::string result = "{\"threat_type\": \"" + json_escape(flow->protocol_tag) +
-                            "\", \"severity\": \"" + json_escape(sev.format()) +
-                            "\", \"cvss\": " + std::to_string(sev.cvss) +
-                            ", \"snippet\": \"" + json_escape(snippet) + "\"}";
+      std::string result = build_alert_json(flow->protocol_tag, sev, snippet);
       LOG_INFO("llm", "ALERT: " + result);
       if (alert_callback_) {
         std::string tag_payload =
@@ -1708,10 +1683,7 @@ void LlmInference::worker_loop() {
         // Curated table is the ceiling; the LLM's payload-aware judgment may
         // downgrade a low-impact instance (this is what populates the Low tier).
         SeverityInfo llm_sev = resolve_severity(threat_type, severity);
-        std::string enriched = "{\"threat_type\": \"" + json_escape(threat_type) +
-                               "\", \"severity\": \"" + json_escape(llm_sev.format()) +
-                               "\", \"cvss\": " + std::to_string(llm_sev.cvss) +
-                               ", \"snippet\": \"" + json_escape(snippet) + "\"}";
+        std::string enriched = build_alert_json(threat_type, llm_sev, snippet);
         LOG_INFO("llm", "ALERT: " + enriched);
         if (alert_callback_) {
           alert_callback_(enriched, raw, payload_str);

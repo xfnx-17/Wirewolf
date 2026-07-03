@@ -106,6 +106,7 @@ add_library(wirewolf_core STATIC
     src/npu_filter.cpp
     src/llm_inference.cpp
     src/pipeline_controller.cpp
+    src/alert_json.cpp
 )
 
 target_include_directories(wirewolf_core PUBLIC include)

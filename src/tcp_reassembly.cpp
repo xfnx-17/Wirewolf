@@ -1,4 +1,5 @@
 #include "tcp_reassembly.hpp"
+#include "alert_json.hpp"
 #include "logger.hpp"
 #include <algorithm>
 #include <cmath>
@@ -14,29 +15,6 @@
 
 // Defined later in this file; used by the flow-completion paths above it.
 static bool looks_like_bittorrent(const std::vector<uint8_t> &p);
-
-static std::string json_escape(const std::string &s) {
-  std::string out;
-  out.reserve(s.size() + 16);
-  for (char c : s) {
-    switch (c) {
-    case '"':  out += "\\\""; break;
-    case '\\': out += "\\\\"; break;
-    case '\n': out += "\\n";  break;
-    case '\r': out += "\\r";  break;
-    case '\t': out += "\\t";  break;
-    default:
-      if (static_cast<unsigned char>(c) < 0x20) {
-        char buf[8];
-        std::snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned char>(c));
-        out += buf;
-      } else {
-        out += c;
-      }
-    }
-  }
-  return out;
-}
 
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
@@ -541,11 +519,8 @@ uint32_t TcpReassembler::process_ip_packet(const uint8_t *ip_packet,
           alert.confidence = confidence_for(alert.severity_info, true);
           alert.snippet = "Overlapping TCP segment with conflicting data "
                           "(reassembly-ambiguity evasion attempt)";
-          alert.raw_llm_output =
-              "{\"threat_type\": \"TCP Evasion\", \"severity\": \"" +
-              json_escape(alert.severity_info.format()) + "\", \"cvss\": " +
-              std::to_string(alert.severity_info.cvss) +
-              ", \"snippet\": \"" + json_escape(alert.snippet) + "\"}";
+          alert.raw_llm_output = build_alert_json(
+              "TCP Evasion", alert.severity_info, alert.snippet);
           alert.payload_text = "[connection-anomaly: TCP Evasion]";
           if (cfg.inline_block)
             block_source(cid.src_ip);
@@ -794,10 +769,7 @@ void TcpReassembler::check_connection_anomalies(uint32_t src_ip,
         alert.confidence = confidence_for(alert.severity_info, true);
         alert.snippet = snippet;
         alert.raw_llm_output =
-            "{\"threat_type\": \"IP Spoofing\", \"severity\": \"" +
-            json_escape(alert.severity_info.format()) + "\", \"cvss\": " +
-            std::to_string(alert.severity_info.cvss) + ", \"snippet\": \"" +
-            json_escape(snippet) + "\"}";
+            build_alert_json("IP Spoofing", alert.severity_info, snippet);
         alert.payload_text = "[connection-anomaly: IP Spoofing]";
         if (cfg.inline_block) {
           block_source(src_ip);
@@ -870,10 +842,7 @@ void TcpReassembler::check_connection_anomalies(uint32_t src_ip,
     alert.confidence = confidence_for(alert.severity_info, true);
     alert.snippet = snippet;
     alert.raw_llm_output =
-        "{\"threat_type\": \"" + json_escape(threat_type) +
-        "\", \"severity\": \"" + json_escape(alert.severity_info.format()) +
-        "\", \"cvss\": " + std::to_string(alert.severity_info.cvss) +
-        ", \"snippet\": \"" + json_escape(snippet) + "\"}";
+        build_alert_json(threat_type, alert.severity_info, snippet);
     alert.payload_text = "[connection-anomaly: " + threat_type + "]";
 
     // IPS: in inline mode, block the offending source going forward.
@@ -1180,11 +1149,7 @@ void TcpReassembler::check_beaconing_at_flush() {
     alert.severity = sev.label();
     alert.confidence = confidence_for(sev, true);
     alert.snippet = snippet;
-    alert.raw_llm_output =
-        "{\"threat_type\": \"C2 Beaconing\", \"severity\": \"" +
-        json_escape(sev.format()) + "\", \"cvss\": " +
-        std::to_string(sev.cvss) + ", \"snippet\": \"" +
-        json_escape(snippet) + "\"}";
+    alert.raw_llm_output = build_alert_json("C2 Beaconing", sev, snippet);
     alert.payload_text = "[connection-anomaly: C2 Beaconing]";
 
     LOG_INFO("pcap", "CONNECTION ALERT: " + alert.raw_llm_output);
@@ -1242,11 +1207,7 @@ void TcpReassembler::check_mass_mailing_at_flush() {
       alert.severity = sev.label();
       alert.confidence = confidence_for(sev, true);
       alert.snippet = snippet;
-      alert.raw_llm_output =
-          "{\"threat_type\": \"Botnet Host\", \"severity\": \"" +
-          json_escape(sev.format()) + "\", \"cvss\": " +
-          std::to_string(sev.cvss) + ", \"snippet\": \"" + json_escape(snippet) +
-          "\"}";
+      alert.raw_llm_output = build_alert_json("Botnet Host", sev, snippet);
       alert.payload_text = "[connection-anomaly: Botnet Host]";
       threat_callback_(alert);
     }
