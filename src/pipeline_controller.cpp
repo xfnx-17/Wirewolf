@@ -36,7 +36,7 @@ PipelineController::~PipelineController() {
 
 bool PipelineController::start(const WirewolfConfig &config) {
   {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock lock(state_mutex_);
     if (state_ != PipelineState::Stopped && state_ != PipelineState::Error)
       return false;
   }
@@ -64,17 +64,17 @@ void PipelineController::stop() {
 }
 
 PipelineState PipelineController::state() const {
-  std::lock_guard<std::mutex> lock(state_mutex_);
+  std::scoped_lock lock(state_mutex_);
   return state_;
 }
 
 std::string PipelineController::last_error() const {
-  std::lock_guard<std::mutex> lock(state_mutex_);
+  std::scoped_lock lock(state_mutex_);
   return last_error_;
 }
 
 PipelineStats PipelineController::stats() const {
-  std::lock_guard<std::mutex> lock(stats_mutex_);
+  std::scoped_lock lock(stats_mutex_);
   return cached_stats_;
 }
 
@@ -96,7 +96,7 @@ void PipelineController::set_on_flow_event(OnFlowEvent cb) {
 
 void PipelineController::set_state(PipelineState new_state) {
   {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock lock(state_mutex_);
     state_ = new_state;
   }
   if (on_state_change_)
@@ -156,7 +156,7 @@ void PipelineController::pipeline_thread_func(WirewolfConfig config) {
     if (on_threat_detected_) {
       reassembler_->set_on_threat_detected(
           [this](const ThreatAlert &alert) {
-            alerts_fired_.fetch_add(1, std::memory_order_relaxed);
+            alerts_fired_.fetch_add(1, std::memory_order::relaxed);
             on_threat_detected_(alert);
           });
     }
@@ -172,7 +172,7 @@ void PipelineController::pipeline_thread_func(WirewolfConfig config) {
     llm_->set_alert_callback(
         [this, inline_block](const std::string &llm_output, const FlowData *flow,
                const std::string &payload_text) {
-          alerts_fired_.fetch_add(1, std::memory_order_relaxed);
+          alerts_fired_.fetch_add(1, std::memory_order::relaxed);
 
           if (on_threat_detected_) {
             ThreatAlert alert;
@@ -252,7 +252,7 @@ void PipelineController::pipeline_thread_func(WirewolfConfig config) {
       s.filter_dropped = filter_->get_filtered_count();
       s.filter_deduped = filter_->get_dedup_count();
       s.filter_device = filter_->get_device();
-      s.alerts_fired = alerts_fired_.load(std::memory_order_relaxed);
+      s.alerts_fired = alerts_fired_.load(std::memory_order::relaxed);
       s.queue_reassembly_to_filter_depth =
           queue_reassembly_to_filter_->size();
       s.queue_filter_to_llm_depth = queue_filter_to_llm_->size();
@@ -263,14 +263,14 @@ void PipelineController::pipeline_thread_func(WirewolfConfig config) {
       s.queue_reassembly_to_filter_capacity =
           queue_reassembly_to_filter_->capacity();
       s.queue_filter_to_llm_capacity = queue_filter_to_llm_->capacity();
-      s.capture_finished = capture_finished_.load(std::memory_order_relaxed);
+      s.capture_finished = capture_finished_.load(std::memory_order::relaxed);
       if (reassembler_) {
         s.blocked_packets = reassembler_->blocked_packet_count();
         s.blocked_sources = reassembler_->blocked_source_count();
       }
 
       {
-        std::lock_guard<std::mutex> lock(stats_mutex_);
+        std::scoped_lock lock(stats_mutex_);
         cached_stats_ = s;
       }
 
@@ -353,7 +353,7 @@ void PipelineController::pipeline_thread_func(WirewolfConfig config) {
     queue_reassembly_to_filter_.reset();
 
     {
-      std::lock_guard<std::mutex> lock(state_mutex_);
+      std::scoped_lock lock(state_mutex_);
       last_error_ = err;
     }
     set_state(PipelineState::Error);

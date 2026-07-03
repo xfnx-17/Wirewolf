@@ -269,7 +269,7 @@ void TcpReassembler::run_windivert() {
     // re-inject so traffic continues to flow normally.
     bool drop = cfg.inline_block && src_ip != 0 && is_blocked(src_ip);
     if (drop) {
-      blocked_packet_count_.fetch_add(1, std::memory_order_relaxed);
+      blocked_packet_count_.fetch_add(1, std::memory_order::relaxed);
     } else {
       WinDivertSend(divert_handle_, packet.data(), recv_len, nullptr, &addr);
     }
@@ -299,7 +299,7 @@ void TcpReassembler::stop() {
 }
 
 void TcpReassembler::block_source(uint32_t src_ip_net_order) {
-  std::lock_guard<std::mutex> lock(blocklist_mutex_);
+  std::scoped_lock lock(blocklist_mutex_);
   // IPS safety: never block allowlisted critical assets. This defeats the
   // "spoof the gateway's source IP to make the IPS DoS it" attack.
   if (allowlist_ips_.count(src_ip_net_order)) {
@@ -314,17 +314,17 @@ void TcpReassembler::block_source(uint32_t src_ip_net_order) {
 }
 
 void TcpReassembler::unblock_source(uint32_t src_ip_net_order) {
-  std::lock_guard<std::mutex> lock(blocklist_mutex_);
+  std::scoped_lock lock(blocklist_mutex_);
   blocked_ips_.erase(src_ip_net_order);
 }
 
 bool TcpReassembler::is_blocked(uint32_t src_ip_net_order) const {
-  std::lock_guard<std::mutex> lock(blocklist_mutex_);
+  std::scoped_lock lock(blocklist_mutex_);
   return blocked_ips_.count(src_ip_net_order) != 0;
 }
 
 void TcpReassembler::set_block_allowlist(const std::string &csv) {
-  std::lock_guard<std::mutex> lock(blocklist_mutex_);
+  std::scoped_lock lock(blocklist_mutex_);
   allowlist_ips_.clear();
   size_t start = 0;
   while (start < csv.size()) {
@@ -460,7 +460,7 @@ uint32_t TcpReassembler::process_ip_packet(const uint8_t *ip_packet,
     if (connections.size() >= MAX_CONNECTIONS) {
       force_evict_oldest(current_time);
       if (connections.size() >= MAX_CONNECTIONS) {
-        shed_count_.fetch_add(1, std::memory_order_relaxed);
+        shed_count_.fetch_add(1, std::memory_order::relaxed);
         return src_ip_ret; // shed reassembly for this flow
       }
     }

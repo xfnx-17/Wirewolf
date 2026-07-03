@@ -272,7 +272,7 @@ extern "C" WIREWOLF_API int wirewolf_start(WirewolfHandle handle) {
       [inst](const ThreatAlert &alert) {
         WirewolfAlert c_alert = convert_alert(alert);
         {
-          std::lock_guard<std::mutex> lock(inst->queue_mutex);
+          std::scoped_lock lock(inst->queue_mutex);
           inst->pending_alerts.push_back(c_alert);
           if (inst->pending_alerts.size() > WirewolfInstance::MAX_QUEUE)
             inst->pending_alerts.pop_front();
@@ -304,7 +304,7 @@ extern "C" WIREWOLF_API int wirewolf_start(WirewolfHandle handle) {
                   ev.timestamp.time_since_epoch())
                   .count();
     c_ev.timestamp_ms = static_cast<int64_t>(ms);
-    std::lock_guard<std::mutex> lock(inst->queue_mutex);
+    std::scoped_lock lock(inst->queue_mutex);
     inst->pending_flows.push_back(c_ev);
     if (inst->pending_flows.size() > WirewolfInstance::MAX_QUEUE)
       inst->pending_flows.pop_front();
@@ -319,7 +319,7 @@ extern "C" WIREWOLF_API int wirewolf_start(WirewolfHandle handle) {
         c_log.level = static_cast<int>(level);
         safe_copy(c_log.component, sizeof(c_log.component), component);
         safe_copy(c_log.message, sizeof(c_log.message), message);
-        std::lock_guard<std::mutex> lock(inst->queue_mutex);
+        std::scoped_lock lock(inst->queue_mutex);
         inst->pending_logs.push_back(c_log);
         if (inst->pending_logs.size() > WirewolfInstance::MAX_QUEUE)
           inst->pending_logs.pop_front();
@@ -412,7 +412,7 @@ extern "C" WIREWOLF_API int wirewolf_poll_alerts(WirewolfHandle handle,
   if (!handle || !out || max <= 0)
     return 0;
   auto *inst = static_cast<WirewolfInstance *>(handle);
-  std::lock_guard<std::mutex> lock(inst->queue_mutex);
+  std::scoped_lock lock(inst->queue_mutex);
   int n = 0;
   while (n < max && !inst->pending_alerts.empty()) {
     out[n++] = inst->pending_alerts.front();
@@ -427,7 +427,7 @@ extern "C" WIREWOLF_API int wirewolf_poll_flow_events(WirewolfHandle handle,
   if (!handle || !out || max <= 0)
     return 0;
   auto *inst = static_cast<WirewolfInstance *>(handle);
-  std::lock_guard<std::mutex> lock(inst->queue_mutex);
+  std::scoped_lock lock(inst->queue_mutex);
   int n = 0;
   while (n < max && !inst->pending_flows.empty()) {
     out[n++] = inst->pending_flows.front();
@@ -441,7 +441,7 @@ extern "C" WIREWOLF_API int wirewolf_poll_logs(WirewolfHandle handle,
   if (!handle || !out || max <= 0)
     return 0;
   auto *inst = static_cast<WirewolfInstance *>(handle);
-  std::lock_guard<std::mutex> lock(inst->queue_mutex);
+  std::scoped_lock lock(inst->queue_mutex);
   int n = 0;
   while (n < max && !inst->pending_logs.empty()) {
     out[n++] = inst->pending_logs.front();

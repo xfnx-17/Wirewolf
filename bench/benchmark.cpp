@@ -161,14 +161,14 @@ int main(int argc, char *argv[]) {
   PipelineController controller;
 
   controller.set_on_threat_detected([&](const ThreatAlert &a) {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::scoped_lock lock(mtx);
     PairKey k = make_pair_key(a.connection.src_ip, a.connection.dst_ip);
     alerted.insert(k);
     alert_types[a.threat_type]++;
   });
 
   controller.set_on_flow_event([&](const FlowEvent &ev) {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::scoped_lock lock(mtx);
     total_flows++;
     PairKey k = make_pair_key(ev.connection.src_ip, ev.connection.dst_ip);
     if (malicious.count(k)) {

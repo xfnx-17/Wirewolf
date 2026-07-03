@@ -24,51 +24,51 @@ WirewolfApp::~WirewolfApp() {
 
 void WirewolfApp::setup_callbacks() {
   controller_.set_on_threat_detected([this](const ThreatAlert &alert) {
-    std::lock_guard<std::mutex> lock(alerts_mutex_);
+    std::scoped_lock lock(alerts_mutex_);
     pending_alerts_.push_back(alert);
   });
 
   controller_.set_on_stats_update([this](const PipelineStats &stats) {
-    std::lock_guard<std::mutex> lock(stats_mutex_);
+    std::scoped_lock lock(stats_mutex_);
     latest_stats_ = stats;
   });
 
   controller_.set_on_state_change([this](PipelineState state) {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock lock(state_mutex_);
     current_state_ = state;
   });
 
   controller_.set_on_flow_event([this](const FlowEvent &ev) {
-    std::lock_guard<std::mutex> lock(activity_mutex_);
+    std::scoped_lock lock(activity_mutex_);
     pending_activity_.push_back(ev);
   });
 
   Logger::instance().set_callback(
       [this](LogLevel level, const std::string &comp, const std::string &msg) {
-        std::lock_guard<std::mutex> lock(logs_mutex_);
+        std::scoped_lock lock(logs_mutex_);
         pending_logs_.push_back({static_cast<int>(level), comp, msg});
       });
 }
 
 void WirewolfApp::process_pending_data() {
   {
-    std::lock_guard<std::mutex> lock(alerts_mutex_);
+    std::scoped_lock lock(alerts_mutex_);
     for (auto &a : pending_alerts_)
       alert_panel_.add_alert(std::move(a));
     pending_alerts_.clear();
   }
   {
-    std::lock_guard<std::mutex> lock(stats_mutex_);
+    std::scoped_lock lock(stats_mutex_);
     stats_panel_.update(latest_stats_);
   }
   {
-    std::lock_guard<std::mutex> lock(activity_mutex_);
+    std::scoped_lock lock(activity_mutex_);
     for (auto &ev : pending_activity_)
       activity_panel_.add_event(std::move(ev));
     pending_activity_.clear();
   }
   {
-    std::lock_guard<std::mutex> lock(logs_mutex_);
+    std::scoped_lock lock(logs_mutex_);
     for (auto &l : pending_logs_)
       log_panel_.add_entry(l.level, l.component, l.message);
     pending_logs_.clear();
@@ -80,7 +80,7 @@ void WirewolfApp::render() {
 
   PipelineState st;
   {
-    std::lock_guard<std::mutex> lock(state_mutex_);
+    std::scoped_lock lock(state_mutex_);
     st = current_state_;
   }
 

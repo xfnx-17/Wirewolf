@@ -43,7 +43,7 @@ public:
   // Enable/disable backpressure mode. When blocking, push() waits for space
   // instead of dropping. Disabling unblocks any waiting pushers.
   void set_blocking(bool enable) {
-    std::lock_guard<std::mutex> lock(m);
+    std::scoped_lock lock(m);
     blocking_ = enable;
     if (!enable)
       cv_push.notify_all();
@@ -58,12 +58,12 @@ public:
         auto lowest = std::prev(q.end());
         if (priority > lowest->first) {
           q.erase(lowest); // evict the least-suspicious queued flow
-          dropped_count.fetch_add(1, std::memory_order_relaxed);
+          dropped_count.fetch_add(1, std::memory_order::relaxed);
           q.emplace(priority, std::move(item));
           cv.notify_one();
         } else {
           // Incoming is no more suspicious than the weakest queued — drop it.
-          dropped_count.fetch_add(1, std::memory_order_relaxed);
+          dropped_count.fetch_add(1, std::memory_order::relaxed);
         }
         return;
       }
@@ -73,7 +73,7 @@ public:
       });
       if (q.size() >= max_capacity) {
         // Woke because done or blocking disabled — drop.
-        dropped_count.fetch_add(1, std::memory_order_relaxed);
+        dropped_count.fetch_add(1, std::memory_order::relaxed);
         return;
       }
     }
@@ -94,19 +94,19 @@ public:
   }
 
   void finish() {
-    std::lock_guard<std::mutex> lock(m);
+    std::scoped_lock lock(m);
     done = true;
     cv.notify_all();
     cv_push.notify_all(); // unblock any waiting pushers
   }
 
   size_t size() const {
-    std::lock_guard<std::mutex> lock(const_cast<std::mutex &>(m));
+    std::scoped_lock lock(const_cast<std::mutex &>(m));
     return q.size();
   }
 
   size_t get_dropped_count() const {
-    return dropped_count.load(std::memory_order_relaxed);
+    return dropped_count.load(std::memory_order::relaxed);
   }
 
   size_t capacity() const { return max_capacity; }

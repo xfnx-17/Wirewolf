@@ -27,13 +27,13 @@ public:
   void set_flow_event_callback(OnFlowEvent cb);
 
   size_t get_passed_count() const {
-    return passed_count.load(std::memory_order_relaxed);
+    return passed_count.load(std::memory_order::relaxed);
   }
   size_t get_filtered_count() const {
-    return filtered_count.load(std::memory_order_relaxed);
+    return filtered_count.load(std::memory_order::relaxed);
   }
   size_t get_dedup_count() const {
-    return dedup_count.load(std::memory_order_relaxed);
+    return dedup_count.load(std::memory_order::relaxed);
   }
   std::string get_device() const {
 #ifdef WIREWOLF_USE_OPENVINO

@@ -30,7 +30,7 @@ public:
   void set_level(int level) { min_level = static_cast<LogLevel>(level); }
 
   void set_callback(LogCallback cb) {
-    std::lock_guard<std::mutex> lock(mtx);
+    std::scoped_lock lock(mtx);
     callback_ = std::move(cb);
   }
 
@@ -57,7 +57,7 @@ public:
         << std::setw(3) << ms.count() << " [" << level_str(level) << "] ["
         << component << "] " << message << "\n";
 
-    std::lock_guard<std::mutex> lock(mtx);
+    std::scoped_lock lock(mtx);
     if (level >= LogLevel::WARN) {
       std::cerr << oss.str() << std::flush;
     } else {

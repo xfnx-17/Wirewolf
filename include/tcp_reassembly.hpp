@@ -111,10 +111,10 @@ public:
 
   // IPS stats (for the dashboard).
   size_t blocked_packet_count() const {
-    return blocked_packet_count_.load(std::memory_order_relaxed);
+    return blocked_packet_count_.load(std::memory_order::relaxed);
   }
   size_t blocked_source_count() const {
-    std::lock_guard<std::mutex> lock(blocklist_mutex_);
+    std::scoped_lock lock(blocklist_mutex_);
     return blocked_ips_.size();
   }
 

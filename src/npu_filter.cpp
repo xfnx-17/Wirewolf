@@ -819,7 +819,7 @@ void NpuFilter::worker_loop() {
 
     if (flow->reassembled_payload.empty()) {
       LOG_DEBUG("filter", "DROP empty payload");
-      filtered_count.fetch_add(1, std::memory_order_relaxed);
+      filtered_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, flow.get(), FlowAction::Filtered, "empty");
       continue;
     }
@@ -847,14 +847,14 @@ void NpuFilter::worker_loop() {
       // Suspicious TLS (bad JA3 or DGA/raw-IP SNI). protocol_tag is set.
       LOG_INFO("filter", "PASS suspicious TLS (" + flow->protocol_tag +
                              "): SNI='" + flow->tls_sni + "' JA3=" + flow->tls_ja3);
-      passed_count.fetch_add(1, std::memory_order_relaxed);
+      passed_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::PassedToLLM, "tls-suspicious");
       output_queue.push(std::move(flow), flow_priority(raw));
       continue;
     } else if (tls == 2) {
       // Benign TLS — the encrypted payload tells the LLM nothing; drop it.
       LOG_DEBUG("filter", "DROP benign TLS (SNI='" + flow->tls_sni + "')");
-      filtered_count.fetch_add(1, std::memory_order_relaxed);
+      filtered_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::Filtered, "tls-benign");
       continue;
     }
@@ -889,7 +889,7 @@ void NpuFilter::worker_loop() {
                                       : std::string("bad-IP")) +
                                  " -> LLM");
         }
-        passed_count.fetch_add(1, std::memory_order_relaxed);
+        passed_count.fetch_add(1, std::memory_order::relaxed);
         emit_flow_event(flow_event_callback_, raw, FlowAction::PassedToLLM,
                         "threat-intel");
         output_queue.push(std::move(flow), flow_priority(raw));
@@ -906,8 +906,8 @@ void NpuFilter::worker_loop() {
       hash_combine(dedup_hash, size_t(0xDEADBEEF));
       if (!seen_payload_hashes_.insert(dedup_hash).second) {
         LOG_DEBUG("filter", "DROP duplicate Heartbleed flow");
-        dedup_count.fetch_add(1, std::memory_order_relaxed);
-        filtered_count.fetch_add(1, std::memory_order_relaxed);
+        dedup_count.fetch_add(1, std::memory_order::relaxed);
+        filtered_count.fetch_add(1, std::memory_order::relaxed);
         emit_flow_event(flow_event_callback_, raw, FlowAction::Filtered, "dedup");
         continue;
       }
@@ -915,7 +915,7 @@ void NpuFilter::worker_loop() {
       LOG_INFO("filter",
                "PASS Heartbleed signature detected, bypassing filters");
       flow->protocol_tag = "Heartbleed";
-      passed_count.fetch_add(1, std::memory_order_relaxed);
+      passed_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::PassedToLLM, "heartbleed");
       output_queue.push(std::move(flow), flow_priority(raw));
       continue;
@@ -930,8 +930,8 @@ void NpuFilter::worker_loop() {
       hash_combine(dedup_hash, size_t(0xDEAD0017));
       if (!seen_payload_hashes_.insert(dedup_hash).second) {
         LOG_DEBUG("filter", "DROP duplicate SMB exploit flow");
-        dedup_count.fetch_add(1, std::memory_order_relaxed);
-        filtered_count.fetch_add(1, std::memory_order_relaxed);
+        dedup_count.fetch_add(1, std::memory_order::relaxed);
+        filtered_count.fetch_add(1, std::memory_order::relaxed);
         emit_flow_event(flow_event_callback_, raw, FlowAction::Filtered, "dedup");
         continue;
       }
@@ -939,7 +939,7 @@ void NpuFilter::worker_loop() {
       LOG_INFO("filter",
                "PASS SMB exploit signature detected, bypassing filters");
       flow->protocol_tag = "SMB Exploit";
-      passed_count.fetch_add(1, std::memory_order_relaxed);
+      passed_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::PassedToLLM, "smb-exploit");
       output_queue.push(std::move(flow), flow_priority(raw));
       continue;
@@ -947,7 +947,7 @@ void NpuFilter::worker_loop() {
 
     if (detect_spnego(raw)) {
       LOG_DEBUG("filter", "DROP GSS-SPNEGO/Kerberos negotiation");
-      filtered_count.fetch_add(1, std::memory_order_relaxed);
+      filtered_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::Filtered, "SPNEGO");
       continue;
     }
@@ -956,7 +956,7 @@ void NpuFilter::worker_loop() {
       LOG_INFO("filter",
                "PASS HTTP brute force pattern detected, bypassing filters");
       flow->protocol_tag = "Brute Force";
-      passed_count.fetch_add(1, std::memory_order_relaxed);
+      passed_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::PassedToLLM, "http-bruteforce");
       output_queue.push(std::move(flow), flow_priority(raw));
       continue;
@@ -964,7 +964,7 @@ void NpuFilter::worker_loop() {
 
     if (detect_benign_http(raw)) {
       LOG_DEBUG("filter", "DROP benign HTTP request");
-      filtered_count.fetch_add(1, std::memory_order_relaxed);
+      filtered_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::Filtered, "benign HTTP");
       continue;
     }
@@ -974,7 +974,7 @@ void NpuFilter::worker_loop() {
       LOG_INFO("filter",
                "PASS credential content detected, bypassing filters");
       flow->protocol_tag = ext ? "Data Exfiltration" : "Suspicious Transfer";
-      passed_count.fetch_add(1, std::memory_order_relaxed);
+      passed_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::PassedToLLM, "credential-content");
       output_queue.push(std::move(flow), flow_priority(raw));
       continue;
@@ -987,7 +987,7 @@ void NpuFilter::worker_loop() {
       // Exfiltration only if the upload leaves the network; an internal->
       // internal FTP STOR is a suspicious transfer, not exfiltration.
       flow->protocol_tag = ext ? "Data Exfiltration" : "Suspicious Transfer";
-      passed_count.fetch_add(1, std::memory_order_relaxed);
+      passed_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::PassedToLLM, "ftp-exfil");
       output_queue.push(std::move(flow), flow_priority(raw));
       continue;
@@ -1008,8 +1008,8 @@ void NpuFilter::worker_loop() {
       hash_combine(dedup_hash, size_t(0xDEADC2C2));
       if (!seen_payload_hashes_.insert(dedup_hash).second) {
         LOG_DEBUG("filter", "DROP duplicate RAT C2 flow");
-        dedup_count.fetch_add(1, std::memory_order_relaxed);
-        filtered_count.fetch_add(1, std::memory_order_relaxed);
+        dedup_count.fetch_add(1, std::memory_order::relaxed);
+        filtered_count.fetch_add(1, std::memory_order::relaxed);
         emit_flow_event(flow_event_callback_, raw, FlowAction::Filtered, "dedup");
         continue;
       }
@@ -1017,7 +1017,7 @@ void NpuFilter::worker_loop() {
       LOG_INFO("filter",
                "PASS RAT C2 protocol detected, bypassing filters");
       flow->protocol_tag = "RAT C2";
-      passed_count.fetch_add(1, std::memory_order_relaxed);
+      passed_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::PassedToLLM, "rat-c2");
       output_queue.push(std::move(flow), flow_priority(raw));
       continue;
@@ -1079,7 +1079,7 @@ void NpuFilter::worker_loop() {
             "DROP binary payload (text_ratio=" + std::to_string(text_ratio) +
                 " size=" + std::to_string(flow->reassembled_payload.size()) +
                 ")");
-        filtered_count.fetch_add(1, std::memory_order_relaxed);
+        filtered_count.fetch_add(1, std::memory_order::relaxed);
         emit_flow_event(flow_event_callback_, raw, FlowAction::Filtered, "binary");
         continue;
       }
@@ -1099,8 +1099,8 @@ void NpuFilter::worker_loop() {
         LOG_DEBUG("filter",
                   "DROP duplicate payload (dedup hash collision) size=" +
                       std::to_string(flow->reassembled_payload.size()));
-        dedup_count.fetch_add(1, std::memory_order_relaxed);
-        filtered_count.fetch_add(1, std::memory_order_relaxed);
+        dedup_count.fetch_add(1, std::memory_order::relaxed);
+        filtered_count.fetch_add(1, std::memory_order::relaxed);
         emit_flow_event(flow_event_callback_, raw, FlowAction::Filtered, "dedup");
         continue;
       }
@@ -1109,14 +1109,14 @@ void NpuFilter::worker_loop() {
                               " var=" + std::to_string(features[1]) +
                               " iat=" + std::to_string(features[2]) + " size=" +
                               std::to_string(flow->reassembled_payload.size()));
-      passed_count.fetch_add(1, std::memory_order_relaxed);
+      passed_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::PassedToLLM, "anomaly");
       output_queue.push(std::move(flow), flow_priority(raw));
     } else {
       LOG_DEBUG("filter", "DROP entropy=" + std::to_string(features[0]) +
                               " var=" + std::to_string(features[1]) +
                               " iat=" + std::to_string(features[2]));
-      filtered_count.fetch_add(1, std::memory_order_relaxed);
+      filtered_count.fetch_add(1, std::memory_order::relaxed);
       emit_flow_event(flow_event_callback_, raw, FlowAction::Filtered, "statistical");
     }
   }
