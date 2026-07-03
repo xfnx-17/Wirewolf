@@ -2,6 +2,7 @@
 #include "alert_json.hpp"
 #include "logger.hpp"
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cstdio>
 #include <string_view>
@@ -268,7 +269,7 @@ static std::string detect_http_line(const std::string &payload) {
   std::string first_line = payload.substr(0, eol);
 
   // HTTP request: "GET /path HTTP/1.1"
-  static constexpr std::string_view methods[] = {
+  static constexpr std::array<std::string_view, 9> methods = {
       "GET",     "POST",  "PUT",     "DELETE", "HEAD",
       "OPTIONS", "PATCH", "CONNECT", "TRACE"};
   for (std::string_view m : methods) {
