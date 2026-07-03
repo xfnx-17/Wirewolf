@@ -1,6 +1,7 @@
 #include "activity_panel.hpp"
 #include "IconsFontAwesome6.h"
 #include "imgui.h"
+#include "panel_format.hpp"
 #include <chrono>
 #include <cstdio>
 #include <cstring>
@@ -11,36 +12,9 @@
 #include <arpa/inet.h>
 #endif
 
-// Helper to format IP from uint32_t (stored in network byte order).
-static void format_ip(uint32_t ip_net_order, char *buf, size_t buf_size) {
-  auto *b = reinterpret_cast<const uint8_t *>(&ip_net_order);
-  snprintf(buf, buf_size, "%u.%u.%u.%u", b[0], b[1], b[2], b[3]);
-}
-
-// Helper to format endpoint (IP:port), converting port from network order.
-static void format_endpoint(uint32_t ip, uint16_t port_net_order, char *buf,
-                            size_t buf_size) {
-  char ip_buf[32];
-  format_ip(ip, ip_buf, sizeof(ip_buf));
-  snprintf(buf, buf_size, "%s:%u", ip_buf, ntohs(port_net_order));
-}
-
-// Helper to format time
-static void format_time(std::chrono::system_clock::time_point tp, char *buf,
-                        size_t buf_size) {
-  auto time_t = std::chrono::system_clock::to_time_t(tp);
-  auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                tp.time_since_epoch()) %
-            1000;
-  std::tm tm_buf{};
-#ifdef _WIN32
-  localtime_s(&tm_buf, &time_t);
-#else
-  localtime_r(&time_t, &tm_buf);
-#endif
-  snprintf(buf, buf_size, "%02d:%02d:%02d.%03d", tm_buf.tm_hour,
-           tm_buf.tm_min, tm_buf.tm_sec, (int)ms.count());
-}
+using gui::format_endpoint;
+using gui::format_ip;
+using gui::format_time;
 
 static const char *action_name(FlowAction action) {
   switch (action) {

@@ -18,6 +18,7 @@
 // label "BENIGN" (case-insensitive) = benign; anything else = malicious.
 // Matching is direction-agnostic (the unordered {src,dst} pair is scored).
 
+#include "bench_common.hpp"
 #include "config.hpp"
 #include "logger.hpp"
 #include "pipeline_controller.hpp"
@@ -49,39 +50,10 @@
 #include <arpa/inet.h>
 #endif
 
-namespace {
-
-// Unordered IP pair key, so direction doesn't matter for scoring.
-using PairKey = uint64_t;
-PairKey make_pair_key(uint32_t a, uint32_t b) {
-  uint32_t lo = std::min(a, b);
-  uint32_t hi = std::max(a, b);
-  return (static_cast<uint64_t>(lo) << 32) | hi;
-}
-
-uint32_t parse_ip(const std::string &s) {
-  uint32_t ip = 0;
-  unsigned o0;
-  unsigned o1;
-  unsigned o2;
-  unsigned o3;
-#ifdef _WIN32
-  if (sscanf_s(s.c_str(), "%u.%u.%u.%u", &o0, &o1, &o2, &o3) == 4)
-#else
-  if (sscanf(s.c_str(), "%u.%u.%u.%u", &o0, &o1, &o2, &o3) == 4)
-#endif
-    ip = static_cast<uint32_t>(o0) | (o1 << 8) | (o2 << 16) | (o3 << 24);
-  return ip; // network byte order, matches IP-header layout used internally
-}
-
-std::string trim(const std::string &s) {
-  size_t a = s.find_first_not_of(" \t\r\n");
-  if (a == std::string::npos) return "";
-  size_t b = s.find_last_not_of(" \t\r\n");
-  return s.substr(a, b - a + 1);
-}
-
-} // namespace
+using bench::make_pair_key;
+using bench::parse_ip;
+using bench::PairKey;
+using bench::trim;
 
 int main(int argc, char *argv[]) {
   if (argc < 4) {
