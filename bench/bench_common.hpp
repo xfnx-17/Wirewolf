@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <string_view>
 
 namespace bench {
 
@@ -36,11 +37,11 @@ inline uint32_t parse_ip(const std::string &s) {
   return ip;
 }
 
-inline std::string trim(const std::string &s) {
+inline std::string trim(std::string_view s) {
   size_t a = s.find_first_not_of(" \t\r\n");
-  if (a == std::string::npos) return "";
+  if (a == std::string_view::npos) return "";
   size_t b = s.find_last_not_of(" \t\r\n");
-  return s.substr(a, b - a + 1);
+  return std::string(s.substr(a, b - a + 1));
 }
 
 } // namespace bench
