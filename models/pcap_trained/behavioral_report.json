@@ -1,0 +1,8 @@
+{
+  "mode": "train-on-pcap",
+  "config_fingerprint": "bytes:128,1024,8192,65536,|dur:1,10,|gap:2,60,3600,|k:0.5|min:4",
+  "test_labeled": 2941,
+  "threshold": -0.25,
+  "confusion": {"tp": 2, "fp": 492, "fn": 34, "tn": 2413},
+  "precision": 0.00404858, "recall": 0.0555556, "f1": 0.00754717
+}

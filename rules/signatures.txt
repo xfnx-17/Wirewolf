@@ -1,0 +1,53 @@
+# Custom content signatures (Snort/Suricata-style, simplified).
+# Format:  name | threat_type | substring
+#   name        = human-readable rule name
+#   threat_type = one of the canonical threat types (drives CVSS scoring)
+#   substring   = case-insensitive substring to match in the canonicalized payload
+# Matched against the normalized payload (URL/unicode-decoded, lowercased).
+#
+# PRECISION POLICY: in Live (NIDS) mode a signature match is a DETERMINISTIC
+# verdict that SKIPS the LLM, so only high-precision, essentially-never-benign
+# patterns belong here. Broad/ambiguous patterns (e.g. "union select",
+# "<script>", "/etc/passwd") are intentionally NOT signatures — they are left
+# for the LLM to arbitrate so Live mode does not false-positive on legitimate
+# web traffic. See the Threat Tagging & False-Positive Tuning note.
+
+# ── Remote code execution (named CVEs / exploit patterns) ──
+Log4Shell JNDI LDAP | Log4Shell | ${jndi:ldap
+Log4Shell JNDI RMI | Log4Shell | ${jndi:rmi
+Log4Shell JNDI DNS | Log4Shell | ${jndi:dns
+Log4Shell JNDI nested | Log4Shell | ${jndi:${
+Shellshock Bash Function | Shellshock | () { :;};
+
+# ── Web shells ──
+China Chopper Webshell (POST) | Webshell | eval($_post[
+China Chopper Webshell (GET) | Webshell | eval($_get[
+China Chopper Webshell (REQUEST) | Webshell | eval($_request[
+PHP system() Webshell | Webshell | system($_
+c99 Webshell | Webshell | c99shell
+r57 Webshell | Webshell | r57shell
+b374k Webshell | Webshell | b374k
+
+# ── Reverse shells ──
+Linux /dev/tcp Reverse Shell | Reverse Shell | /dev/tcp/
+Bash Interactive Reverse Shell | Reverse Shell | bash -i >&
+Netcat -e Reverse Shell | Reverse Shell | nc -e
+mkfifo Reverse Shell | Reverse Shell | mkfifo /tmp
+
+# ── Credential theft ──
+Mimikatz logonpasswords | Credential Theft | sekurlsa::logonpasswords
+Mimikatz lsadump | Credential Theft | lsadump::
+
+# ── Droppers / download cradles ──
+PowerShell DownloadString Cradle | Dropper Download | downloadstring(
+PowerShell Encoded Command | Dropper Download | powershell -enc
+PowerShell Encoded (base64 JAB) | Dropper Download | powershell -e jab
+certutil URLCache Download | Dropper Download | certutil -urlcache
+
+# ── Malware payloads / C2 ──
+MZ PE Base64 Beacon | Malware Payload | tvqqaama
+Cobalt Strike Default GET | RAT C2 | /ca?
+
+# ── Cryptomining ──
+Stratum mining.subscribe | Cryptominer Traffic | mining.subscribe
+Stratum+TCP Pool | Cryptominer Traffic | stratum+tcp://

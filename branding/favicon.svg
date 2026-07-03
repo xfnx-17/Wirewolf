@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+  <!-- Wirewolf — favicon cut: heavier stroke, no blip, no eye. Built to survive 16px. -->
+  <polyline points="5,56 20,56 30,26 33,10 38,24 41,24 45,11 50,26 55,30 64,38 64,46 58,47 46,56 67,56"
+    fill="none" stroke="#FFAD33" stroke-width="6.5"
+    stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="2.5"/>
+</svg>

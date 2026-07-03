@@ -1,0 +1,7 @@
+# Known C2 / phishing / malware domains. Matched against TLS SNI and (future) DNS.
+# A parent entry matches subdomains: "evil-c2.com" also matches "x.evil-c2.com".
+# Update from feeds like abuse.ch URLhaus / threatfox.
+evil-c2.com
+malware-delivery.net
+phishing-login.example
+badcdn.ru

@@ -1,0 +1,119 @@
+Sentinel-CPP: A High-Performance Local AI Network Threat Detection Engine
+Author: [Your Name]
+
+Field: Cybersecurity, Artificial Intelligence, Edge Computing
+
+Hardware Target: Intel Core Ultra 9 275HX / NVIDIA RTX 5070 / Intel AI Boost (NPU)
+
+Abstract
+Sentinel-CPP is an intelligent Network Intrusion Detection System (NIDS) built in
+modern C++20. It captures live network traffic or reads offline PCAP files, reassembles
+TCP flows, applies statistical anomaly detection to filter out benign traffic, and
+forwards suspicious payloads to a local quantized Large Language Model (Llama 3.1 8B)
+running on an NVIDIA GPU via CUDA. The LLM classifies threats and outputs structured
+JSON alerts. All processing happens locally with zero cloud dependency, ensuring data
+privacy and low latency in high-security environments.
+
+1. Introduction
+Modern network threats are increasingly dynamic, bypassing static firewall rules. While
+AI-driven detection exists, it often suffers from high latency or privacy concerns due
+to cloud-based processing. Sentinel-CPP addresses these challenges with a local-first
+approach. By combining statistical pre-filtering with on-device LLM inference, the
+system achieves real-time threat detection without sending any traffic data off-machine.
+
+2. System Architecture
+The system follows a multi-stage pipeline connected by thread-safe queues:
+
+  Stage 1 - Packet Capture (Npcap / libpcap):
+    Captures raw Ethernet frames from a live network interface or reads from .pcap
+    files. Supports offline mode for forensic analysis of captured traffic.
+
+  Stage 2 - TCP Reassembly:
+    Reconstructs interleaved TCP segments back into continuous application-layer
+    payloads. Handles out-of-order packets, validates IP/TCP header bounds, and
+    triggers flow delivery based on configurable size thresholds (default: 1 MB).
+
+  Stage 3 - Statistical Pre-Filter:
+    A lightweight anomaly detection layer that filters approximately 85% of benign
+    traffic before it reaches the LLM. Five heuristics are evaluated per flow:
+      - Shannon entropy analysis (detects encrypted/compressed or unusually uniform data)
+      - Packet length variance (detects irregular payload sizes)
+      - Inter-arrival timing (detects flood patterns)
+      - Suspicious character ratio (detects script injection markers like <, ', ", ;)
+      - Low-entropy large payload detection (detects data exfiltration attempts)
+    An optional OpenVINO-accelerated model can replace this layer for NPU offloading.
+
+  Stage 4 - LLM Threat Analysis (llama.cpp / CUDA):
+    Suspicious payloads are truncated to a configurable limit (default: 2048 chars)
+    and analyzed by a quantized Llama-3.1-8B-Instruct model running on the GPU.
+    The model uses a strict ChatML few-shot prompt template that includes examples
+    of benign traffic (Kerberos, DNS, TLS handshakes) to suppress false positives.
+
+  Stage 5 - Structured JSON Output:
+    Threats are emitted as JSON objects to stdout for ingestion by SIEM systems or
+    logging dashboards. Benign flows produce an empty object {}.
+
+3. Engineered Mitigations
+Several layers protect against the practical limitations of local LLM inference:
+
+  - Context Window Truncation: Payloads are capped before tokenization to prevent
+    VRAM exhaustion.
+  - Asynchronous Pipeline: Thread-safe queues with configurable capacity (default:
+    1024 items) decouple capture from inference. Overflow is dropped with tracking.
+  - Hallucination Suppression: Few-shot prompting with explicit benign examples
+    trains the model to return empty results instead of false positives.
+  - Structured Logging: Timestamped, severity-leveled logging across all components
+    with thread-safe output to stdout/stderr.
+
+4. Technical Specifications
+  Language:       C++20 (MSVC / Visual Studio 2022)
+  Build System:   CMake 3.20+ with FetchContent for dependency management
+  Packet Capture: Npcap SDK 1.13 (Windows) via libpcap API
+  LLM Runtime:    llama.cpp with GGML CUDA backend
+  GPU Compute:    NVIDIA CUDA Toolkit 12.x+
+  NPU (optional): Intel OpenVINO 2026.0.0
+  Testing:        Catch2 v3.5.2 (30 unit tests covering queue, config, filter, types)
+  Platform:       Windows 10/11
+
+5. Runtime Configuration
+The engine supports the following command-line options:
+  --log-level N         Logging verbosity (0=DEBUG, 1=INFO, 2=WARN, 3=ERROR)
+  --queue-capacity N    Max items per pipeline queue (default: 1024)
+  --payload-limit N     Max characters sent to LLM (default: 2048)
+  --max-tokens N        Max LLM output tokens (default: 512)
+  --max-flow-size N     Flow reassembly size trigger in bytes (default: 1 MB)
+  --openvino            Use OpenVINO model instead of statistical filter
+  --entropy-high F      High entropy threshold (default: 7.0)
+  --entropy-low F       Low entropy threshold (default: 1.0)
+
+6. Project Structure
+  src/                  Core implementation (main, TCP reassembly, filter, LLM worker)
+  include/              Headers (config, logger, thread-safe queue, packet types)
+  tests/                Unit tests (Catch2)
+  models/               Quantized LLM (GGUF) and OpenVINO IR model files
+  scripts/              Build automation and model download scripts
+  docs/                 Project documentation
+
+7. Building and Running
+  .\build.ps1                   Standard build
+  .\build.ps1 -Test             Build and run unit tests
+  .\build.ps1 -OpenVINO         Build with OpenVINO NPU support
+  .\build.ps1 -Test -Run        Build, test, then launch the engine
+
+  Live capture:
+    .\build\Release\sentinel.exe "\Device\NPF_{GUID}" "models\model.xml" "models\llama.gguf"
+
+  Offline PCAP analysis:
+    .\build\Release\sentinel.exe "path\to\capture.pcap" "models\model.xml" "models\llama.gguf"
+
+8. Threat Alert Format
+  { "threat_type": "SQLi", "severity": "High", "snippet": "SELECT * FROM ..." }
+
+  Benign traffic returns an empty object: {}
+
+9. Conclusion
+Sentinel-CPP demonstrates that combining statistical heuristics with local LLM
+inference provides an effective, privacy-preserving approach to network intrusion
+detection. By keeping all analysis on-device, the system eliminates cloud latency
+and data exposure while leveraging modern heterogeneous hardware (CPU, GPU, NPU)
+for real-time threat classification.

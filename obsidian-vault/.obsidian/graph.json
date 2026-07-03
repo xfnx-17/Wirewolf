@@ -1,0 +1,86 @@
+{
+  "collapse-filter": true,
+  "search": "",
+  "showTags": true,
+  "showAttachments": true,
+  "hideUnresolved": true,
+  "showOrphans": true,
+  "collapse-color-groups": true,
+  "colorGroups": [
+    {
+      "query": "tag:#moc",
+      "color": {
+        "a": 1,
+        "rgb": 16777215
+      }
+    },
+    {
+      "query": "tag:#module",
+      "color": {
+        "a": 1,
+        "rgb": 5214199
+      }
+    },
+    {
+      "query": "tag:#component",
+      "color": {
+        "a": 1,
+        "rgb": 4176208
+      }
+    },
+    {
+      "query": "tag:#data",
+      "color": {
+        "a": 1,
+        "rgb": 16766474
+      }
+    },
+    {
+      "query": "tag:#api",
+      "color": {
+        "a": 1,
+        "rgb": 16217742
+      }
+    },
+    {
+      "query": "tag:#flow",
+      "color": {
+        "a": 1,
+        "rgb": 10711543
+      }
+    },
+    {
+      "query": "tag:#concept",
+      "color": {
+        "a": 1,
+        "rgb": 3003583
+      }
+    },
+    {
+      "query": "tag:#meta",
+      "color": {
+        "a": 1,
+        "rgb": 16218298
+      }
+    },
+    {
+      "query": "tag:#external",
+      "color": {
+        "a": 1,
+        "rgb": 14917640
+      }
+    }
+  ],
+  "collapse-display": false,
+  "showArrow": false,
+  "textFadeMultiplier": 0,
+  "nodeSizeMultiplier": 1,
+  "lineSizeMultiplier": 1,
+  "collapse-forces": true,
+  "centerStrength": 0,
+  "repelStrength": 0,
+  "linkStrength": 1,
+  "linkDistance": 30,
+  "scale": 0.6316046762907406,
+  "close": false
+}

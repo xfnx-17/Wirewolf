@@ -1,0 +1,5 @@
+# Known-bad endpoint IPv4 addresses (C2 servers, scanners, sinkholes).
+# Matched against both source and destination IP of each flow.
+# Update from feeds like abuse.ch Feodo Tracker / threatfox.
+45.76.33.10
+185.220.101.1

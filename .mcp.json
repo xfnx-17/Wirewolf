@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "obsidian": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "obsidian-mcp",
+        "D:\\SideProject\\side project"
+      ]
+    }
+  }
+}

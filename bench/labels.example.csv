@@ -1,0 +1,15 @@
+# Ground-truth labels for benchmarking.
+# Format:  src_ip,dst_ip,label
+#   label = BENIGN  -> benign pair
+#   label = <anything else> -> malicious (the attack type, for per-type stats)
+# Matching is direction-agnostic: the unordered {src_ip,dst_ip} pair is scored.
+#
+# Replace these with the ground truth for your test capture (e.g. derived from
+# the CICIDS2017 / UNSW-NB15 flow-label CSVs).
+10.0.0.50,192.168.1.5,SQLi
+10.0.0.50,192.168.1.20,Log4Shell
+10.0.0.200,192.168.1.10,SSH Brute Force
+192.168.1.100,45.76.33.10,RAT C2
+192.168.1.50,10.0.0.5,BENIGN
+192.168.1.50,8.8.8.8,BENIGN
+10.0.0.10,142.250.80.0,BENIGN

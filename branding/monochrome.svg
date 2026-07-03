@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+  <!-- Wirewolf — single-color mark. Inherits currentColor: black in documents, white on dark UI, ink on print. -->
+  <polyline points="4,56 10,56 13,50 16,56 22,56 30,26 33,10 38,24 41,24 45,11 50,26 55,30 64,38 64,46 58,47 46,56 69,56"
+    fill="none" stroke="currentColor" stroke-width="4.5"
+    stroke-linecap="square" stroke-linejoin="miter"/>
+  <rect x="48" y="30.5" width="4" height="4" fill="currentColor"/>
+</svg>

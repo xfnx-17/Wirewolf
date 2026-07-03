@@ -1,0 +1,9 @@
+# CICIDS2017 Friday afternoon — attacker 172.16.0.1.
+# 192.168.10.50 = DDoS (LOIC SYN flood) target; other hosts = Port Scan probes.
+172.16.0.1,192.168.10.50,DDoS
+172.16.0.1,192.168.10.15,Port Scan
+172.16.0.1,192.168.10.8,Port Scan
+172.16.0.1,192.168.10.9,Port Scan
+172.16.0.1,192.168.10.14,Port Scan
+172.16.0.1,192.168.10.5,Port Scan
+172.16.0.1,192.168.10.51,Port Scan

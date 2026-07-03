@@ -1,0 +1,6 @@
+# Known-malware JA3 TLS client fingerprints (MD5 of ClientHello).
+# One hash per line. Update from feeds like abuse.ch SSLBL / sslbl.abuse.ch/ja3-fingerprints.
+# Lines starting with # are ignored.
+e7d705a3286e19ea42f587b344ee6865
+a0e9f5d64349fb13191bc781f81f42e1
+51c64c77e60f3980eea90869b68c58a8

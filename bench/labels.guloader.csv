@@ -1,0 +1,10 @@
+# 2026-02-03 GuLoader/AgentTesla infection with FTP data exfiltration.
+# Ground truth (via tshark): infected host 10.2.3.101 uploads stolen
+# credentials (STOR PW_tyler-DESKTOP-...html, USER/PASS) over FTP to
+# 162.241.123.75 = data exfiltration. Other flows are benign (Google TLS,
+# gateway).
+10.2.3.101,162.241.123.75,Data Exfiltration
+10.2.3.101,142.251.186.132,BENIGN
+10.2.3.101,142.250.115.138,BENIGN
+10.2.3.101,208.95.112.1,BENIGN
+10.2.3.101,10.2.3.1,BENIGN

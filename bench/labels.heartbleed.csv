@@ -1,0 +1,8 @@
+# Ground truth for heartbleed.normal.and.attack.1.pcap
+# Established via tshark: TLS heartbeat packets (content_type 24) flow
+# between 10.0.0.40 and 10.0.0.42 = the Heartbleed attack. Other
+# conversations are normal background traffic.
+10.0.0.40,10.0.0.42,Heartbleed
+10.0.0.43,10.0.0.40,BENIGN
+10.0.0.40,8.8.8.8,BENIGN
+10.0.0.40,8.8.4.4,BENIGN

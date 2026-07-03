@@ -1,0 +1,55 @@
+# ── Build output & CMake ───────────────────────────────────────────
+build/
+out/
+dist/
+.vs/
+CMakeCache.txt
+CMakeFiles/
+*.obj
+*.ilk
+*.pdb
+*.exp
+
+# ── Vendored dependencies (fetched/built locally) ──────────────────
+vcpkg/
+openvino/
+npcap-sdk/
+
+# ── Flutter ────────────────────────────────────────────────────────
+flutter_app/build/
+flutter_app/.dart_tool/
+flutter_app/.idea/
+flutter_app/windows/flutter/ephemeral/
+flutter_app/.flutter-plugins-dependencies
+flutter_app/.run_log*.txt
+flutter_app/*.iml
+
+# ── Large AI models & captures (multi-GB — never commit) ───────────
+# datasets/ is ~62GB of pcaps, models/ holds multi-GB GGUFs.
+datasets/
+models/.cache/
+*.gguf
+*.pcap
+*.pcapng
+*.onnx.data
+
+# IP2Location-derived binary geo databases (~107MB, regenerable via
+# tool/convert_ip2location.dart from IP2Location LITE; not redistributed here).
+flutter_app/assets/geo/*.bin
+
+# ── Capture/run logs & scratch output ──────────────────────────────
+friday_output*.txt
+friday_test_output.txt
+njrat_output.txt
+*.log
+imgui.ini
+
+# ── Personal Obsidian scratch vault + zipped snapshot ──────────────
+side project/
+obsidian-vault.zip
+obsidian-vault/.obsidian/workspace.json
+
+# ── Editor / OS / local tooling ────────────────────────────────────
+.claude/settings.local.json
+.DS_Store
+Thumbs.db

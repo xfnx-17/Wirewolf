@@ -1,0 +1,12 @@
+MSBuild version 18.4.0+6e61e96ac for .NET Framework
+
+  ggml-base.vcxproj -> D:\SideProject\build\bin\Release\ggml-base.dll
+  ggml-cpu.vcxproj -> D:\SideProject\build\bin\Release\ggml-cpu.dll
+  ggml-cuda.vcxproj -> D:\SideProject\build\bin\Release\ggml-cuda.dll
+  ggml.vcxproj -> D:\SideProject\build\bin\Release\ggml.dll
+  Scanning sources for module dependencies...
+  llama.vcxproj -> D:\SideProject\build\bin\Release\llama.dll
+  sentinel_core.vcxproj -> D:\SideProject\build\Release\sentinel_core.lib
+  sentinel_capi.cpp
+     Creating library D:/SideProject/build/Release/sentinel.lib and object D:/SideProject/build/Release/sentinel.exp
+  sentinel_ffi.vcxproj -> D:\SideProject\build\ffi\Release\sentinel.dll

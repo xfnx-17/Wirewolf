@@ -1,0 +1,13 @@
+CompileFlags:
+  CompilationDatabase: build
+  Add:
+    - "-std=c++20"
+    - "-D_WIN32"
+    - "-DWPCAP"
+    - "-DHAVE_REMOTE"
+    - "-ID:/SideProject/include"
+    - "-ID:/SideProject/npcap-sdk/Include"
+    - "-ID:/SideProject/build/_deps/llama-src/include"
+    - "-ID:/SideProject/build/_deps/llama-src/ggml/include"
+Diagnostics:
+  UnusedIncludes: None

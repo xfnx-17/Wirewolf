@@ -1,0 +1,8 @@
+{
+  "config_fingerprint": "bytes:128,1024,8192,65536,|dur:1,10,|gap:2,60,3600,|k:0.5|min:4",
+  "train_connections": {"botnet": 951, "normal": 570},
+  "test_labeled": 3602,
+  "threshold": 0,
+  "confusion": {"tp": 2480, "fp": 107, "fn": 465, "tn": 550},
+  "precision": 0.958639, "recall": 0.842105, "f1": 0.896602
+}

@@ -1,0 +1,3 @@
+# CICIDS2017 Friday — bounded 80k-packet slice of attacker 172.16.0.1.
+# This window targets 192.168.10.50 (DDoS SYN flood + port scan).
+172.16.0.1,192.168.10.50,DDoS
