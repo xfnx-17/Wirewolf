@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
+#include <string_view>
 
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -289,13 +290,12 @@ static std::string detect_http_line(const std::string &payload) {
   std::string first_line = payload.substr(0, eol);
 
   // HTTP request: "GET /path HTTP/1.1"
-  static const char *methods[] = {"GET",     "POST",    "PUT",   "DELETE",
-                                  "HEAD",    "OPTIONS", "PATCH", "CONNECT",
-                                  "TRACE"};
-  for (const char *m : methods) {
-    size_t len = std::strlen(m);
-    if (first_line.size() > len && first_line.compare(0, len, m) == 0 &&
-        first_line[len] == ' ')
+  static constexpr std::string_view methods[] = {
+      "GET",     "POST",  "PUT",     "DELETE", "HEAD",
+      "OPTIONS", "PATCH", "CONNECT", "TRACE"};
+  for (std::string_view m : methods) {
+    if (first_line.size() > m.size() && first_line.starts_with(m) &&
+        first_line[m.size()] == ' ')
       return "HTTP Request: " + first_line;
   }
 
@@ -394,7 +394,7 @@ static bool is_false_positive(const std::string &threat_type,
   // --- Check 1: Known benign HTTP response/request headers ---
   // These are standard headers that contain security-related keywords
   // but are defensive, not offensive.
-  static const char *benign_header_prefixes[] = {
+  static constexpr std::string_view benign_header_prefixes[] = {
       "X-XSS-Protection",
       "X-Content-Type-Options",
       "X-Frame-Options",
@@ -415,10 +415,8 @@ static bool is_false_positive(const std::string &threat_type,
       "Authorization: Basic",
   };
 
-  for (const char *prefix : benign_header_prefixes) {
-    size_t plen = std::strlen(prefix);
-    if (snippet.size() >= plen &&
-        snippet.compare(0, plen, prefix) == 0) {
+  for (std::string_view prefix : benign_header_prefixes) {
+    if (snippet.starts_with(prefix)) {
       return true;
     }
   }
